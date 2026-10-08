@@ -1,0 +1,9 @@
+.venv/
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+# CC-BY-NC veri: depoya konmaz, scripts/ ile kullanıcı kendi indirir
+data/raw/
+data/processed/
