@@ -12,6 +12,10 @@ flowchart LR
   D --> F[Kayan-başlangıç doğrulaması<br/>holdout.ts]
   F --> G[Rapor + şekiller<br/>07/08 scripts]
   D --> H[Yeniden kalibrasyon deneyi]
+  D --> I[sweep.ts: 12k senaryo]
+  I --> J[Vekil model<br/>GBM, monoton kısıt]
+  J --> K[Personel planı]
+  K --> L[verify_staffing.ts<br/>simülatörle doğrulama]
 ```
 
 Neden bu yığın: veri hazırlama ve istatistiksel uydurma Python'da (DuckDB, scipy) kısa; simülasyon motoru ise web katmanında (R3F) aynen çalışacağı için
@@ -21,5 +25,7 @@ TypeScript'te, parametreler zod ile çalışma anında doğrulanan bir JSON dosy
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
 cd sim && npm install && npx vitest run
 ```
+
+ML katmanı (vekil model, personel planı, varış tahmini): [docs/ML.md](docs/ML.md).
 
 Veri ve indirme: `data/README.md`. Doğrulamanın tamamı ve sınırlamalar: [docs/VALIDATION.md](docs/VALIDATION.md).

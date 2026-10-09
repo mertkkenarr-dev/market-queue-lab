@@ -7,3 +7,7 @@ __pycache__/
 # CC-BY-NC veri: depoya konmaz, scripts/ ile kullanıcı kendi indirir
 data/raw/
 data/processed/
+
+# yeniden üretilebilir ML çıktıları
+ml/data/*.csv
+ml/surrogate.joblib

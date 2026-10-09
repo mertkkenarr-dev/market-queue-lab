@@ -1,0 +1,62 @@
+{
+  "P1→P2": {
+    "methods": {
+      "profil": {
+        "mape": 56.238629127323655,
+        "bias": 55.92264333880821,
+        "poisson_deviance": 49.081069020586064
+      },
+      "profil × son dönem ölçeği": {
+        "mape": 56.238629127323705,
+        "bias": 55.92264333880826,
+        "poisson_deviance": 49.081069020586106
+      },
+      "Poisson GBM": {
+        "mape": 55.854745481408365,
+        "bias": 55.7577006384995,
+        "poisson_deviance": 45.813906755965085
+      }
+    },
+    "last_period_scale": 1.0000000000000002
+  },
+  "P1+P2→P3": {
+    "methods": {
+      "profil": {
+        "mape": 23.305946958349363,
+        "bias": 19.84751726173997,
+        "poisson_deviance": 15.442281396806955
+      },
+      "profil × son dönem ölçeği": {
+        "mape": 14.410531362184138,
+        "bias": -1.5800138057047435,
+        "poisson_deviance": 9.126642643076961
+      },
+      "Poisson GBM": {
+        "mape": 11.951331997820787,
+        "bias": -3.3376170255405855,
+        "poisson_deviance": 6.466267805997884
+      }
+    },
+    "last_period_scale": 0.8212100546008956
+  },
+  "P2→P3": {
+    "methods": {
+      "profil": {
+        "mape": 14.387457961232972,
+        "bias": -3.620885425762585,
+        "poisson_deviance": 9.27871009765634
+      },
+      "profil × son dönem ölçeği": {
+        "mape": 14.387457961232972,
+        "bias": -3.620885425762585,
+        "poisson_deviance": 9.27871009765634
+      },
+      "Poisson GBM": {
+        "mape": 14.307126192211156,
+        "bias": -3.359305604452402,
+        "poisson_deviance": 9.657835589525309
+      }
+    },
+    "last_period_scale": 1.0
+  }
+}
