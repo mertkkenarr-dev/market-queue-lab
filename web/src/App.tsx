@@ -15,7 +15,7 @@ const parsed = loadParams()
 export default function App() {
   const [settings, setSettings] = useState<Settings>(INITIAL)
   const [playing, setPlaying] = useState(true)
-  const clock = useRef<PlaybackClock>({ t: 0, speed: INITIAL.speed, playing: true, end: 3600 })
+  const clock = useRef<PlaybackClock>({ t: 0, speed: INITIAL.speed, playing: true, end: 3600, epoch: 0 })
   const statsRef = useRef<ReplayStats>(EMPTY)
 
   const stream = useMemo(
@@ -26,6 +26,7 @@ export default function App() {
 
   const restart = useCallback(() => {
     clock.current.t = 0
+    clock.current.epoch += 1
     clock.current.playing = true
     setPlaying(true)
   }, [])
