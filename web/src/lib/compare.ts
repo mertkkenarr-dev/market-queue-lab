@@ -1,19 +1,28 @@
 import type { StoreParams } from '@sim/params'
 import { summarize, type Summary } from '@sim/stats'
-import type { DowGroup } from '../types/scenario'
+import type { DowGroup, LayoutKind } from '../types/scenario'
+import { LAYOUTS } from './layoutNames'
 import { buildStream, runSummary, type RunSummary } from './scenario'
 
 const mean = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0) / xs.length
 
-export interface PairedComparison {
-  reps: number
-  separate: { meanWait: Summary; waitP90: number; probWait: number; utilization: number }
-  pooled: { meanWait: Summary; waitP90: number; probWait: number; utilization: number }
-  /** ayrı − ortak: pozitif = ortak kuyruk daha kısa bekletiyor. Aynı müşteri akışı üzerinde eşleştirilmiş. */
-  diff: Summary
+export interface LayoutStats {
+  meanWait: Summary
+  waitP90: number
+  probWait: number
+  utilization: number
 }
 
-const collect = (rs: readonly RunSummary[]) => ({
+export type Rival = Exclude<LayoutKind, 'pooled'>
+
+export interface PairedComparison {
+  reps: number
+  layouts: Record<LayoutKind, LayoutStats>
+  /** Her rakip düzen için (rakip − ortak) ortalama bekleme farkı: pozitif = ortak kuyruk daha kısa bekletiyor. */
+  vsPooled: Record<Rival, Summary>
+}
+
+const collect = (rs: readonly RunSummary[]): LayoutStats => ({
   meanWait: summarize(rs.map((r) => r.meanWait)),
   waitP90: mean(rs.map((r) => r.waitP90)),
   probWait: mean(rs.map((r) => r.probWait)),
@@ -21,37 +30,43 @@ const collect = (rs: readonly RunSummary[]) => ({
 })
 
 /**
- * Her tekrarda ikisi de aynı müşteri akışını görür (ortak rastgele sayılar), bu yüzden fark
+ * Her tekrarda üç düzen de aynı müşteri akışını görür (ortak rastgele sayılar), bu yüzden fark
  * eşleştirilmiş örneklemle tahmin edilir: akış değişkenliği farktan çıkar, aralık daralır.
  */
 export function pairedComparison(params: StoreParams, day: DowGroup, hour: number, lanes: number, reps = 30): PairedComparison {
-  const sep: RunSummary[] = []
-  const pool: RunSummary[] = []
+  const runs: Record<LayoutKind, RunSummary[]> = { 'separate-jsq': [], 'separate-random': [], pooled: [] }
   for (let r = 0; r < reps; r++) {
     const stream = buildStream(params, day, hour, 1000 + r)
     if (stream.customers.length === 0) continue
-    sep.push(runSummary(stream, lanes, 'separate-jsq'))
-    pool.push(runSummary(stream, lanes, 'pooled'))
+    for (const k of LAYOUTS) runs[k].push(runSummary(stream, lanes, k))
   }
-  if (sep.length === 0) throw new Error('Bu gün ve saatte müşteri yok')
+  const n = runs.pooled.length
+  if (n === 0) throw new Error('Bu gün ve saatte müşteri yok')
+  const diff = (k: Rival): Summary => summarize(runs[k].map((s, i) => s.meanWait - (runs.pooled[i] as RunSummary).meanWait))
   return {
-    reps: sep.length,
-    separate: collect(sep),
-    pooled: collect(pool),
-    diff: summarize(sep.map((s, i) => s.meanWait - (pool[i] as RunSummary).meanWait)),
+    reps: n,
+    layouts: { 'separate-jsq': collect(runs['separate-jsq']), 'separate-random': collect(runs['separate-random']), pooled: collect(runs.pooled) },
+    vsPooled: { 'separate-jsq': diff('separate-jsq'), 'separate-random': diff('separate-random') },
   }
 }
 
-const fmtSeconds = (s: number): string => (Math.abs(s) >= 60 ? `${Math.floor(Math.abs(s) / 60)} dk ${Math.round(Math.abs(s) % 60)} sn` : `${Math.round(Math.abs(s))} sn`)
+const fmtSeconds = (s: number): string => {
+  const a = Math.abs(s)
+  return a >= 60 ? `${Math.floor(a / 60)} dk ${Math.round(a % 60)} sn` : `${Math.round(a)} sn`
+}
 
-/** Sonucu olduğu gibi söyleyen cümle: aralık sıfırı kapsıyorsa "fark belirgin değil" der. */
-export function describeComparison(c: PairedComparison): string {
-  const d = c.diff
-  if (d.ciLow <= 0 && d.ciHigh >= 0) {
-    return `Bu yükte ve ${c.reps} tekrarda iki düzen arasında belirgin bir ortalama bekleme farkı yok (fark ${fmtSeconds(d.mean)}, %95 aralığı sıfırı kapsıyor).`
-  }
-  const pct = Math.round((Math.abs(d.mean) / (d.mean > 0 ? c.separate.meanWait.mean : c.pooled.meanWait.mean)) * 100)
+/** Bir rakibe karşı tek cümlelik, sonuca sadık ifade: aralık sıfırı kapsıyorsa "fark belirgin değil" der. */
+function clause(label: string, d: Summary, rivalMean: number, pooledMean: number): string {
+  if (d.ciLow <= 0 && d.ciHigh >= 0) return `${label} seçenlere göre belirgin bir fark yok`
+  const pct = Math.round((Math.abs(d.mean) / (d.mean > 0 ? rivalMean : pooledMean)) * 100)
   return d.mean > 0
-    ? `Aynı müşteriler, aynı kasalar: tek ortak kuyruk ortalama beklemeyi ${fmtSeconds(d.mean)} (%${pct}) kısaltıyor.`
-    : `Aynı müşteriler, aynı kasalar: ayrı kuyruklar ortalama beklemeyi ${fmtSeconds(d.mean)} (%${pct}) kısaltıyor.`
+    ? `${label} seçenlere göre ortalama beklemeyi ${fmtSeconds(d.mean)} (%${pct}) kısaltıyor`
+    : `${label} seçenlere göre ortalama beklemeyi ${fmtSeconds(d.mean)} (%${pct}) uzatıyor`
+}
+
+export function describeComparison(c: PairedComparison): string {
+  const pooled = c.layouts.pooled.meanWait.mean
+  const random = clause('rastgele kuyruk', c.vsPooled['separate-random'], c.layouts['separate-random'].meanWait.mean, pooled)
+  const smart = clause('en kısa kuyruğu', c.vsPooled['separate-jsq'], c.layouts['separate-jsq'].meanWait.mean, pooled)
+  return `Aynı müşteriler, aynı kasalar: tek ortak kuyruk, ${random}; ${smart}.`
 }

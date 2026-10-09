@@ -1,4 +1,5 @@
 import type { ClockRef } from '../hooks/usePlayback'
+import { LAYOUT_NAME, LAYOUTS } from '../lib/layoutNames'
 import type { DowGroup, LayoutKind } from '../types/scenario'
 
 export interface Settings {
@@ -6,6 +7,9 @@ export interface Settings {
   hour: number
   lanes: number
   layout: LayoutKind
+  /** Yan yana karşılaştırmada sol ve sağ sahnenin düzeni. */
+  left: LayoutKind
+  right: LayoutKind
   speed: number
   /** Aynı müşteriler, iki düzen yan yana. */
   compare: boolean
@@ -54,12 +58,28 @@ export function Controls({ settings: s, onChange, clock, onRestart, playing, onT
           <button key={l} type="button" role="radio" aria-checked={s.compare === v} onClick={() => set('compare', v)}>{l}</button>
         ))}
       </div>
-      {!s.compare && (
-        <div className="segmented" role="radiogroup" aria-label="Kuyruk düzeni">
-          {([['separate-jsq', 'Her kasaya ayrı kuyruk'], ['pooled', 'Tek ortak kuyruk']] as const).map(([v, l]) => (
-            <button key={v} type="button" role="radio" aria-checked={s.layout === v} onClick={() => set('layout', v)}>{l}</button>
-          ))}
-        </div>
+      {!s.compare ? (
+        <label>
+          Kuyruk düzeni
+          <select value={s.layout} onChange={(e) => set('layout', e.target.value as LayoutKind)}>
+            {LAYOUTS.map((k) => <option key={k} value={k}>{LAYOUT_NAME[k]}</option>)}
+          </select>
+        </label>
+      ) : (
+        <>
+          <label>
+            Sol sahne
+            <select value={s.left} onChange={(e) => set('left', e.target.value as LayoutKind)}>
+              {LAYOUTS.map((k) => <option key={k} value={k}>{LAYOUT_NAME[k]}</option>)}
+            </select>
+          </label>
+          <label>
+            Sağ sahne
+            <select value={s.right} onChange={(e) => set('right', e.target.value as LayoutKind)}>
+              {LAYOUTS.map((k) => <option key={k} value={k}>{LAYOUT_NAME[k]}</option>)}
+            </select>
+          </label>
+        </>
       )}
       <div className="segmented" role="radiogroup" aria-label="Oynatma hızı">
         {SPEEDS.map((v) => (

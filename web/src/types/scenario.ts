@@ -1,5 +1,5 @@
 export type DowGroup = 'mon_thu' | 'fri' | 'sat' | 'sun'
-export type LayoutKind = 'pooled' | 'separate-jsq'
+export type LayoutKind = 'pooled' | 'separate-jsq' | 'separate-random'
 
 /** Bir müşterinin motor izinden çıkarılmış yolculuğu; id sırası varış sırasıdır. */
 export interface Journey {
