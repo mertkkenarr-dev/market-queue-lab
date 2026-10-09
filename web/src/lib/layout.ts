@@ -1,20 +1,22 @@
 /** Birimler metre. Mağaza 22 x 16 m; kasa hattı arka duvara yakın, kuyruklar müşteri tarafına (+z) uzanır. */
-export const STORE = { halfW: 11, halfD: 8 }
+export const STORE = { halfW: 11, zBack: -8, zFront: 13 }
+export const STORE_DEPTH = STORE.zFront - STORE.zBack
+export const STORE_CENTER_Z = (STORE.zFront + STORE.zBack) / 2
 export const DESK_Z = -3.4
 export const BELT_LENGTH = 2.2
 export const QUEUE_START_Z = DESK_Z + 3.0
 export const QUEUE_GAP = 1.0
-export const DOOR = { x: -9.2, z: 7.0 }
-export const EXIT = { x: 9.2, z: 7.0 }
+export const DOOR = { x: -9.2, z: STORE.zFront - 1 }
+export const EXIT = { x: 9.2, z: STORE.zFront - 1 }
 export const EXIT_SECONDS = 8
 
 /** Mağazada sabit 10 fiziksel kasa var; açık olanlar soldan (girişe en yakın) başlar, kalanlar kapalı durur. */
 export const TOTAL_LANES = 10
 const LANE_SPAN = 15.6
-const SLOTS_PER_COLUMN = Math.floor((STORE.halfD - 0.8 - QUEUE_START_Z) / QUEUE_GAP) + 1
+const SLOTS_PER_COLUMN = Math.floor((STORE.zFront - 0.8 - QUEUE_START_Z) / QUEUE_GAP) + 1
 const COLUMN_GAP = 0.95
 export const POOLED_COLUMNS = 6
-const POOLED_ROWS = Math.floor((STORE.halfD - 0.6 - (QUEUE_START_Z + 0.6)) / QUEUE_GAP) + 1
+const POOLED_ROWS = Math.floor((STORE.zFront - 0.6 - (QUEUE_START_Z + 0.6)) / QUEUE_GAP) + 1
 const POOLED_EXTRA_COLUMNS = 4
 
 export function laneX(lane: number): number {

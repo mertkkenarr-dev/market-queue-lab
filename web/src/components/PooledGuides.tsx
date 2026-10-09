@@ -2,7 +2,7 @@ import { openLanesCenter, QUEUE_START_Z, STORE } from '../lib/layout'
 
 const X_HALF = 3.1
 const Z0 = QUEUE_START_Z - 0.4
-const Z1 = STORE.halfD - 0.6
+const Z1 = STORE.zFront - 0.6
 const POSTS: [number, number][] = [
   [-X_HALF, Z0], [X_HALF, Z0], [-X_HALF, (Z0 + Z1) / 2], [X_HALF, (Z0 + Z1) / 2], [-X_HALF, Z1], [X_HALF, Z1], [0, Z1],
 ]

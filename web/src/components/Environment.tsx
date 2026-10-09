@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { CanvasTexture, Color, Object3D, RepeatWrapping, SRGBColorSpace, type InstancedMesh } from 'three'
-import { DOOR, EXIT, STORE } from '../lib/layout'
+import { DOOR, EXIT, STORE, STORE_CENTER_Z, STORE_DEPTH } from '../lib/layout'
 import { COLORS } from '../lib/palette'
 import { mulberry32 } from '../lib/prng'
 
@@ -26,7 +26,7 @@ function useTile(): CanvasTexture {
     }
     const t = new CanvasTexture(c)
     t.wrapS = t.wrapT = RepeatWrapping
-    t.repeat.set(STORE.halfW * 2 / 1.2, STORE.halfD * 2 / 1.2)
+    t.repeat.set(STORE.halfW * 2 / 1.2, STORE_DEPTH / 1.2)
     t.colorSpace = SRGBColorSpace
     t.anisotropy = 8
     return t
@@ -37,9 +37,9 @@ function useTile(): CanvasTexture {
 
 interface Rack { x: number; z: number; length: number; turned: boolean }
 const RACKS: Rack[] = [
-  { x: 0, z: -7.4, length: 20, turned: false },
-  { x: -10.3, z: 0.5, length: 12, turned: true },
-  { x: 10.3, z: 0.5, length: 12, turned: true },
+  { x: 0, z: STORE.zBack + 0.6, length: 20, turned: false },
+  { x: -10.3, z: 3.5, length: 19, turned: true },
+  { x: 10.3, z: 3.5, length: 19, turned: true },
 ]
 
 function Products() {
@@ -86,17 +86,17 @@ export function Environment() {
   const tile = useTile()
   return (
     <group>
-      <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <planeGeometry args={[STORE.halfW * 2, STORE.halfD * 2]} />
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0, STORE_CENTER_Z]} receiveShadow>
+        <planeGeometry args={[STORE.halfW * 2, STORE_DEPTH]} />
         <meshStandardMaterial map={tile} roughness={0.38} metalness={0.05} />
       </mesh>
-      <mesh position={[0, 1.6, -STORE.halfD - 0.1]} receiveShadow>
+      <mesh position={[0, 1.6, STORE.zBack - 0.1]} receiveShadow>
         <boxGeometry args={[STORE.halfW * 2 + 0.4, 3.2, 0.2]} />
         <meshStandardMaterial color={COLORS.wall} roughness={0.9} />
       </mesh>
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (STORE.halfW + 0.1), 1.6, 0]} receiveShadow>
-          <boxGeometry args={[0.2, 3.2, STORE.halfD * 2]} />
+        <mesh key={s} position={[s * (STORE.halfW + 0.1), 1.6, STORE_CENTER_Z]} receiveShadow>
+          <boxGeometry args={[0.2, 3.2, STORE_DEPTH]} />
           <meshStandardMaterial color={COLORS.wall} roughness={0.9} />
         </mesh>
       ))}
@@ -110,7 +110,7 @@ export function Environment() {
       ))}
       <Products />
       {[DOOR, EXIT].map((p, i) => (
-        <group key={i} position={[p.x, 0, STORE.halfD - 0.15]}>
+        <group key={i} position={[p.x, 0, STORE.zFront - 0.15]}>
           <mesh position={[0, 0.006, -0.5]} rotation-x={-Math.PI / 2} receiveShadow>
             <planeGeometry args={[2.2, 1.6]} />
             <meshStandardMaterial color="#2a3a35" roughness={1} />

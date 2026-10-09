@@ -46,3 +46,16 @@ export function runLayout(stream: Stream, lanes: number, layout: LayoutKind): La
   }
   return { journeys, meanWait: res.meanWait, waitP90: res.waitP90, probWait: res.probWait, utilization: res.utilization, endTime }
 }
+
+export interface RunSummary {
+  meanWait: number
+  waitP90: number
+  probWait: number
+  utilization: number
+}
+
+/** İz tutmayan hafif koşu: çok tekrarlı karşılaştırmada yüzlerce kez çağrılır. */
+export function runSummary(stream: Stream, lanes: number, layout: LayoutKind): RunSummary {
+  const r = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1 })
+  return { meanWait: r.meanWait, waitP90: r.waitP90, probWait: r.probWait, utilization: r.utilization }
+}

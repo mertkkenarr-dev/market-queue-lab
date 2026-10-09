@@ -58,3 +58,35 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
   .stage { grid-row: 2; grid-column: 1; height: 560px; }
 }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+.stage { position: relative; }
+.live-tag { position: absolute; bottom: 16px; left: 16px; display: flex; align-items: baseline; gap: 8px; padding: 8px 16px; background: var(--surface-raised); border: 1px solid var(--line); font-size: 14px; }
+.live-tag strong { font-size: 32px; line-height: 1; }
+.live-tag small { color: var(--ink-muted); }
+.lab.wide { max-width: 1480px; }
+.stages { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.stages .stage { height: 360px; min-height: 280px; }
+@media (min-width: 960px) {
+  .lab.wide { grid-template-columns: minmax(0, 1fr); }
+  .stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stages .stage { grid-row: auto; grid-column: auto; height: 460px; }
+}
+.compare-table, .chart { background: var(--surface-raised); border: 1px solid var(--line); padding: 24px; margin: 0; }
+.compare-table h2 { font-size: clamp(20px, 3.4vw, 32px); line-height: 1.2; margin: 0 0 24px; font-weight: 700; font-stretch: 75%; max-width: 40ch; }
+.compare-table table { border-collapse: collapse; width: 100%; max-width: 640px; font-size: 14px; }
+.compare-table caption { text-align: left; color: var(--ink-muted); padding-bottom: 8px; }
+.compare-table th, .compare-table td { text-align: left; padding: 8px 16px 8px 0; border-bottom: 1px solid var(--line); }
+.compare-table thead th { color: var(--ink-muted); font-weight: 400; }
+.compare-table .fine { margin: 16px 0 0; color: var(--ink-muted); font-size: 13px; }
+.chart figcaption { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { fill: var(--ink-muted); font-size: 11px; }
+.chart .series { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.chart .separate { stroke: var(--ink); color: var(--ink); }
+.chart .pooled { stroke: var(--ink-muted); stroke-dasharray: 6 4; }
+.chart .playhead { stroke: var(--ink); stroke-width: 1; opacity: 0.5; }
+.chart .dot.separate { fill: var(--ink); }
+.chart .dot.pooled { fill: var(--surface-raised); stroke: var(--ink-muted); stroke-width: 2; }
+.chart .tag { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.chart .tag.muted { fill: var(--ink-muted); }

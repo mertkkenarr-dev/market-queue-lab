@@ -7,6 +7,8 @@ export interface Settings {
   lanes: number
   layout: LayoutKind
   speed: number
+  /** Aynı müşteriler, iki düzen yan yana. */
+  compare: boolean
 }
 
 interface Props {
@@ -47,11 +49,18 @@ export function Controls({ settings: s, onChange, clock, onRestart, playing, onT
         <output className="num">{s.lanes}</output>
         <button type="button" onClick={() => set('lanes', Math.min(10, s.lanes + 1))} aria-label="Kasa artır">+</button>
       </div>
-      <div className="segmented" role="radiogroup" aria-label="Kuyruk düzeni">
-        {([['separate-jsq', 'Her kasaya ayrı kuyruk'], ['pooled', 'Tek ortak kuyruk']] as const).map(([v, l]) => (
-          <button key={v} type="button" role="radio" aria-checked={s.layout === v} onClick={() => set('layout', v)}>{l}</button>
+      <div className="segmented" role="radiogroup" aria-label="Görünüm">
+        {([[false, 'Tek sahne'], [true, 'Yan yana karşılaştır']] as const).map(([v, l]) => (
+          <button key={l} type="button" role="radio" aria-checked={s.compare === v} onClick={() => set('compare', v)}>{l}</button>
         ))}
       </div>
+      {!s.compare && (
+        <div className="segmented" role="radiogroup" aria-label="Kuyruk düzeni">
+          {([['separate-jsq', 'Her kasaya ayrı kuyruk'], ['pooled', 'Tek ortak kuyruk']] as const).map(([v, l]) => (
+            <button key={v} type="button" role="radio" aria-checked={s.layout === v} onClick={() => set('layout', v)}>{l}</button>
+          ))}
+        </div>
+      )}
       <div className="segmented" role="radiogroup" aria-label="Oynatma hızı">
         {SPEEDS.map((v) => (
           <button key={v} type="button" role="radio" aria-checked={s.speed === v} onClick={() => set('speed', v)}>×{v}</button>

@@ -10,7 +10,7 @@ describe('queueSlot', () => {
             const { x, z } = queueSlot(rank, lane, lanes, pooled)
             expect(Math.abs(x)).toBeLessThanOrEqual(STORE.halfW)
             expect(z).toBeGreaterThanOrEqual(QUEUE_START_Z)
-            expect(z).toBeLessThanOrEqual(STORE.halfD)
+            expect(z).toBeLessThanOrEqual(STORE.zFront)
           }
         }
       }

@@ -1,5 +1,5 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import { EffectComposer, TiltShift2 } from '@react-three/postprocessing'
 import { PCFSoftShadowMap } from 'three'
 import type { ClockRef } from '../hooks/usePlayback'
@@ -17,34 +17,27 @@ interface Props {
   lanes: number
   clock: ClockRef
   statsRef: { current: ReplayStats }
+  /** Yan yana karşılaştırmada iki sahne birlikte çizilir: çözünürlük ve gölge kalitesi düşürülür. */
+  compact?: boolean
 }
 
-function ClockDriver({ clock }: { clock: ClockRef }) {
-  useFrame((_, dt) => {
-    const c = clock.current
-    if (c.playing && c.t < c.end) c.t = Math.min(c.end, c.t + Math.min(dt, 0.1) * c.speed)
-  })
-  return null
-}
-
-export function StoreScene({ journeys, layout, lanes, clock, statsRef }: Props) {
+export function StoreScene({ journeys, layout, lanes, clock, statsRef, compact = false }: Props) {
   return (
-    <Canvas shadows={{ type: PCFSoftShadowMap }} camera={{ position: [0, 11.5, 13], fov: 30 }} dpr={[1, 1.75]}>
+    <Canvas shadows={{ type: PCFSoftShadowMap }} camera={{ position: compact ? [0, 18, 27] : [0, 15, 21], fov: 30 }} dpr={compact ? [1, 1.25] : [1, 1.75]}>
       <color attach="background" args={[COLORS.wall]} />
       <hemisphereLight args={['#ffffff', '#9fb0a9', 1.1]} />
       <directionalLight
-        position={[-6, 14, 9]}
+        position={[-6, 18, 14]}
         intensity={2.2}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-14}
-        shadow-camera-right={14}
-        shadow-camera-top={12}
+        shadow-mapSize={compact ? [2048, 2048] : [3072, 3072]}
+        shadow-camera-left={-15}
+        shadow-camera-right={15}
+        shadow-camera-top={18}
         shadow-camera-bottom={-12}
         shadow-bias={-0.0004}
       />
-      <OrbitControls target={[0, 0, 1.2]} enablePan={false} minDistance={8} maxDistance={32} minPolarAngle={0.25} maxPolarAngle={1.25} />
-      <ClockDriver clock={clock} />
+      <OrbitControls target={[0, 0, 3.5]} enablePan={false} minDistance={8} maxDistance={40} minPolarAngle={0.25} maxPolarAngle={1.25} />
       <Environment />
       <Counters lanes={lanes} statsRef={statsRef} />
       <BeltItems journeys={journeys} lanes={lanes} clock={clock} />

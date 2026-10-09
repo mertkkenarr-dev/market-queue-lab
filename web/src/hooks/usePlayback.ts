@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react'
+import { useEffect, type MutableRefObject } from 'react'
 
 export interface PlaybackClock {
   /** Simülasyon saniyesi (saat başından). */
@@ -13,3 +13,23 @@ export interface PlaybackClock {
 }
 
 export type ClockRef = MutableRefObject<PlaybackClock>
+
+/**
+ * Saati tek yerden ilerletir. Birden çok sahne (yan yana karşılaştırma) aynı saati okur;
+ * her sahne kendi karesinde ilerletseydi zaman iki kat hızlanırdı.
+ */
+export function useClockDriver(clock: ClockRef): void {
+  useEffect(() => {
+    let raf = 0
+    let last = performance.now()
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1)
+      last = now
+      const c = clock.current
+      if (c.playing && c.t < c.end) c.t = Math.min(c.end, c.t + dt * c.speed)
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [clock])
+}
