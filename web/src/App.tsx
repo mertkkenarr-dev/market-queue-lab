@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Nav, viewFromHash, type ViewId } from './components/Nav'
-import LabView from './views/LabView'
-
+const LabView = lazy(() => import('./views/LabView'))
 const StaffingView = lazy(() => import('./views/StaffingView'))
 const ValidationView = lazy(() => import('./views/ValidationView'))
 

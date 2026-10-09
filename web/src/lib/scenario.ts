@@ -38,7 +38,7 @@ export function buildStream(params: StoreParams, day: DowGroup, hour: number, se
 export function runLayout(stream: Stream, lanes: number, layout: LayoutKind): LayoutRun {
   const res = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1, trace: true })
   const trace = res.trace ?? []
-  const journeys = new Array<Journey>(stream.customers.length)
+  const journeys: Journey[] = Array.from({ length: stream.customers.length })
   let endTime = 0
   for (const r of trace) {
     journeys[r.id] = { arrival: r.arrival, start: r.start, end: r.end, lane: r.server, items: stream.items[r.id] ?? 1 }

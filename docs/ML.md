@@ -30,7 +30,7 @@ Sınır: eğitim aralığı dışında (ρ>1,05, 10 kasadan fazla) güvenilmez.
 `ml/02_staffing.py`: her gün tipi × saat için P90 bekleme ≤ 2 dk sağlayan en az kasa, vekille aranır (ortalama gün ve %90 yoğun gün).
 `sim/scripts/verify_staffing.ts` planı **gerçek simülatörle** sınar (400 tekrar):
 
-- 112 hücrenin 112'sinde önerilen kasa hedefi sağlıyor (medyan P90 78 sn).
+- 112 hücrenin 112'sinde önerilen kasa hedefi sağlıyor (medyan P90 78 sn). *Düzeltme (web katmanı yazılırken bulundu):* planı 12 kasaya kadar aramıştım; bunun bir hücresi (Cumartesi 11:00, yoğun gün: 11 kasa) vekilin 10 kasalık eğitim aralığı ve mağazadaki 10 fiziksel kasa dışındaydı. Web planlayıcısı bu hücreyi "10 kasayla sağlanamıyor" olarak gösterir.
 - Bir eksik kasa 97 hücrede hedefi bozuyor (medyan P90 231 sn). 15 hücrede bir eksik de yetiyor → vekil hafif tutucu.
 - P3'te gerçekte açık olan kasalarla (vekil ölçü, 37 stabil hücre) fark ortalama −0,23 kasa: plan mağazanın fiili düzenine yakın.
 
