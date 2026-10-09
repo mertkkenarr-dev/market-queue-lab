@@ -1,0 +1,155 @@
+{
+  "P1→P2": {
+    "Ort. sepet (servis)": {
+      "mode": "observed",
+      "n": 182,
+      "bias_pct": -6.073182855621215,
+      "mape_pct": 10.06225139707795,
+      "coverage_pct": 61.53846153846154
+    },
+    "Ort. servis süresi (servis)": {
+      "mode": "observed",
+      "n": 182,
+      "bias_pct": -0.0442694281301307,
+      "mape_pct": 6.790474225799972,
+      "coverage_pct": 73.62637362637363
+    },
+    "Kasa doluluğu (servis)": {
+      "mode": "observed",
+      "n": 93,
+      "bias_pct": -0.8804357031005544,
+      "mape_pct": 9.324314904246117,
+      "coverage_pct": 59.13978494623656
+    },
+    "Ort. sepet (self-servis)": {
+      "mode": "observed",
+      "n": 182,
+      "bias_pct": -0.21739292934208337,
+      "mape_pct": 13.215219297472997,
+      "coverage_pct": 88.46153846153845
+    },
+    "Ort. servis süresi (self-servis)": {
+      "mode": "observed",
+      "n": 182,
+      "bias_pct": -0.32854305134449124,
+      "mape_pct": 9.373268396959105,
+      "coverage_pct": 90.65934065934066
+    },
+    "Saatlik müşteri sayısı (servis)": {
+      "mode": "predicted",
+      "n": 182,
+      "bias_pct": 46.87390877724052,
+      "mape_pct": 48.003514288797476,
+      "coverage_pct": 40.10989010989011
+    },
+    "Saatlik müşteri sayısı (self-servis)": {
+      "mode": "predicted",
+      "n": 182,
+      "bias_pct": 158.03902817559515,
+      "mape_pct": 158.03902817559515,
+      "coverage_pct": 4.395604395604396
+    }
+  },
+  "P1+P2→P3": {
+    "Ort. sepet (servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -10.456544970698193,
+      "mape_pct": 12.794348709178728,
+      "coverage_pct": 44.19889502762431
+    },
+    "Ort. servis süresi (servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": 6.119369003336391,
+      "mape_pct": 8.655955009819788,
+      "coverage_pct": 62.430939226519335
+    },
+    "Kasa doluluğu (servis)": {
+      "mode": "observed",
+      "n": 90,
+      "bias_pct": 4.1968799665555885,
+      "mape_pct": 9.546003711417589,
+      "coverage_pct": 57.77777777777777
+    },
+    "Ort. sepet (self-servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -0.2000656611664714,
+      "mape_pct": 12.560578818583396,
+      "coverage_pct": 85.0828729281768
+    },
+    "Ort. servis süresi (self-servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": 0.7092633672215746,
+      "mape_pct": 8.985130660132041,
+      "coverage_pct": 88.39779005524862
+    },
+    "Saatlik müşteri sayısı (servis)": {
+      "mode": "predicted",
+      "n": 181,
+      "bias_pct": 12.745196286137398,
+      "mape_pct": 22.620803846295363,
+      "coverage_pct": 92.26519337016575
+    },
+    "Saatlik müşteri sayısı (self-servis)": {
+      "mode": "predicted",
+      "n": 181,
+      "bias_pct": 38.74066147620241,
+      "mape_pct": 39.227643189285416,
+      "coverage_pct": 92.26519337016575
+    }
+  },
+  "P2→P3": {
+    "Ort. sepet (servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -6.685832854120336,
+      "mape_pct": 10.708183388151186,
+      "coverage_pct": 54.14364640883977
+    },
+    "Ort. servis süresi (servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": 5.554772779845629,
+      "mape_pct": 8.351246719720287,
+      "coverage_pct": 62.98342541436463
+    },
+    "Kasa doluluğu (servis)": {
+      "mode": "observed",
+      "n": 90,
+      "bias_pct": 3.671715316275933,
+      "mape_pct": 9.185742837322618,
+      "coverage_pct": 56.666666666666664
+    },
+    "Ort. sepet (self-servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -1.3308239053329742,
+      "mape_pct": 12.4147654385774,
+      "coverage_pct": 86.74033149171271
+    },
+    "Ort. servis süresi (self-servis)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -0.3818068260618464,
+      "mape_pct": 9.200564925451413,
+      "coverage_pct": 85.6353591160221
+    },
+    "Saatlik müşteri sayısı (servis)": {
+      "mode": "predicted",
+      "n": 181,
+      "bias_pct": -4.067374675730089,
+      "mape_pct": 17.45570234009339,
+      "coverage_pct": 86.1878453038674
+    },
+    "Saatlik müşteri sayısı (self-servis)": {
+      "mode": "predicted",
+      "n": 181,
+      "bias_pct": -4.147623848970263,
+      "mape_pct": 18.814671601149854,
+      "coverage_pct": 93.37016574585635
+    }
+  }
+}
