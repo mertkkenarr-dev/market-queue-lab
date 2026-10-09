@@ -105,7 +105,9 @@ export function Crowd({ journeys, layout, lanes, clock, statsRef }: Props) {
       dummy.scale.setScalar(1)
       dummy.updateMatrix()
       ;(cart.current as InstancedMesh).setMatrixAt(i, dummy.matrix)
-      dummy.scale.set(1, 0.03 + 0.26 * Math.min(1, (journeys[i] as Journey).items / 40), 1)
+      const jr = journeys[i] as Journey
+      const unloaded = Math.min(1, Math.max(0, (clock.current.t - jr.start) / (jr.end - jr.start) * 1.3))
+      dummy.scale.set(1, 0.02 + 0.28 * Math.min(1, jr.items / 40) * (1 - unloaded), 1)
       dummy.position.y = 0.46
       dummy.updateMatrix()
       ;(load.current as InstancedMesh).setMatrixAt(i, dummy.matrix)

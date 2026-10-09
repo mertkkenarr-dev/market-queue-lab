@@ -29,6 +29,7 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
   let serving = 0
   let done = 0
   let waitSum = 0
+  const laneServing = new Uint8Array(lanes)
   let started = 0
   out.state.fill(HIDDEN)
   for (let i = 0; i < journeys.length; i++) {
@@ -55,6 +56,7 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
       out.state[i] = SERVING
       out.waited[i] = j.start - j.arrival
       serving++
+      laneServing[j.lane] = 1
     } else {
       done++
       if (t < j.end + EXIT_SECONDS) {
@@ -65,7 +67,7 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
       }
     }
   }
-  return { waiting, serving, done, meanWaitStarted: started ? waitSum / started : 0 }
+  return { waiting, serving, done, meanWaitStarted: started ? waitSum / started : 0, laneServing }
 }
 
 export { DOOR }

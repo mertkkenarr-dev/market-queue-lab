@@ -5,9 +5,11 @@ import { PCFSoftShadowMap } from 'three'
 import type { ClockRef } from '../hooks/usePlayback'
 import { COLORS } from '../lib/palette'
 import type { Journey, LayoutKind, ReplayStats } from '../types/scenario'
+import { BeltItems } from './BeltItems'
 import { Counters } from './Counters'
 import { Crowd } from './Crowd'
 import { Environment } from './Environment'
+import { PooledGuides } from './PooledGuides'
 
 interface Props {
   journeys: readonly Journey[]
@@ -27,7 +29,7 @@ function ClockDriver({ clock }: { clock: ClockRef }) {
 
 export function StoreScene({ journeys, layout, lanes, clock, statsRef }: Props) {
   return (
-    <Canvas shadows={{ type: PCFSoftShadowMap }} camera={{ position: [0, 15, 17], fov: 30 }} dpr={[1, 1.75]}>
+    <Canvas shadows={{ type: PCFSoftShadowMap }} camera={{ position: [0, 11.5, 13], fov: 30 }} dpr={[1, 1.75]}>
       <color attach="background" args={[COLORS.wall]} />
       <hemisphereLight args={['#ffffff', '#9fb0a9', 1.1]} />
       <directionalLight
@@ -41,10 +43,12 @@ export function StoreScene({ journeys, layout, lanes, clock, statsRef }: Props) 
         shadow-camera-bottom={-12}
         shadow-bias={-0.0004}
       />
-      <OrbitControls target={[0, 0, 0.5]} enablePan={false} minDistance={8} maxDistance={32} minPolarAngle={0.25} maxPolarAngle={1.25} />
+      <OrbitControls target={[0, 0, 1.2]} enablePan={false} minDistance={8} maxDistance={32} minPolarAngle={0.25} maxPolarAngle={1.25} />
       <ClockDriver clock={clock} />
       <Environment />
-      <Counters lanes={lanes} />
+      <Counters lanes={lanes} statsRef={statsRef} />
+      <BeltItems journeys={journeys} lanes={lanes} clock={clock} />
+      {layout === 'pooled' && <PooledGuides />}
       <Crowd journeys={journeys} layout={layout} lanes={lanes} clock={clock} statsRef={statsRef} />
       <EffectComposer multisampling={4}>
         <TiltShift2 blur={0.1} />

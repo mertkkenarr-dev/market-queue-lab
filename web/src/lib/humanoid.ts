@@ -12,8 +12,12 @@ type Zone = (typeof ZONE)[keyof typeof ZONE]
 function piece(g: BufferGeometry, part: Part, zone: Zone, at: [number, number, number], scale: [number, number, number] = [1, 1, 1]): BufferGeometry {
   g.applyMatrix4(new Matrix4().makeScale(...scale).setPosition(...at))
   const n = g.getAttribute('position').count
-  g.setAttribute('aPart', new Float32BufferAttribute(new Float32Array(n).fill(part), 1))
-  g.setAttribute('aZone', new Float32BufferAttribute(new Float32Array(n).fill(zone), 1))
+  const pz = new Float32Array(n * 2)
+  for (let i = 0; i < n; i++) {
+    pz[i * 2] = part
+    pz[i * 2 + 1] = zone
+  }
+  g.setAttribute('aPZ', new Float32BufferAttribute(pz, 2))
   return g
 }
 

@@ -8,7 +8,7 @@ import { buildStream, runLayout } from './lib/scenario'
 import type { ReplayStats } from './types/scenario'
 
 const SEED = 7
-const EMPTY: ReplayStats = { waiting: 0, serving: 0, done: 0, meanWaitStarted: 0 }
+const EMPTY: ReplayStats = { waiting: 0, serving: 0, done: 0, meanWaitStarted: 0, laneServing: new Uint8Array(0) }
 const INITIAL: Settings = { day: 'fri', hour: 17, lanes: 5, layout: 'separate-jsq', speed: 30 }
 const parsed = loadParams()
 

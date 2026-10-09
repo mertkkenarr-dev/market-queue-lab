@@ -15,4 +15,6 @@ export interface ReplayStats {
   serving: number
   done: number
   meanWaitStarted: number
+  /** Kasa başına: şu an hizmet var mı (1) yok mu (0). Kasiyer hareketi ve lamba bunu okur. */
+  laneServing: Uint8Array
 }

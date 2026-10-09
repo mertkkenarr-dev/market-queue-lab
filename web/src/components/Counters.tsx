@@ -1,11 +1,14 @@
-import { useEffect, useMemo } from 'react'
-import { CanvasTexture, Object3D, SRGBColorSpace, type InstancedMesh } from 'three'
-import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useEffect, useMemo, useRef } from 'react'
+import { CanvasTexture, Object3D, SRGBColorSpace, type InstancedBufferAttribute, type InstancedMesh, type MeshBasicMaterial } from 'three'
 import { createCrowdMaterial } from '../lib/crowdMaterial'
 import { attachInstanceAttributes } from '../lib/crowdState'
 import { buildHumanoid } from '../lib/humanoid'
 import { BELT_LENGTH, DESK_Z, laneX } from '../lib/layout'
 import { STAFF_STYLE } from '../lib/people'
+import type { ReplayStats } from '../types/scenario'
+
+type StatsRef = { current: ReplayStats }
 
 function numberTexture(n: number): CanvasTexture {
   const c = document.createElement('canvas')
@@ -25,13 +28,20 @@ function numberTexture(n: number): CanvasTexture {
   return t
 }
 
-function Cashiers({ lanes }: { lanes: number }) {
+function Cashiers({ lanes, statsRef }: { lanes: number; statsRef: StatsRef }) {
   const ref = useRef<InstancedMesh>(null)
-  const { geometry, material } = useMemo(() => {
+  const { geometry, material, uTime, work } = useMemo(() => {
     const geometry = buildHumanoid()
-    attachInstanceAttributes(geometry, Array.from({ length: lanes }, (_, i) => STAFF_STYLE(i)), -0.75)
-    return { geometry, ...createCrowdMaterial() }
+    const { work } = attachInstanceAttributes(geometry, Array.from({ length: lanes }, (_, i) => STAFF_STYLE(i)), -0.75)
+    return { geometry, work, ...createCrowdMaterial() }
   }, [lanes])
+  useFrame((_, dt) => {
+    uTime.value += Math.min(dt, 0.1)
+    const serving = statsRef.current.laneServing
+    const attr = work as InstancedBufferAttribute
+    for (let i = 0; i < lanes; i++) attr.setW(i, serving[i] ? 1 : 0.08)
+    attr.needsUpdate = true
+  })
   useEffect(() => {
     const m = ref.current
     if (!m) return
@@ -47,9 +57,14 @@ function Cashiers({ lanes }: { lanes: number }) {
   return <instancedMesh key={lanes} ref={ref} args={[geometry, material, lanes]} frustumCulled={false} castShadow />
 }
 
-export function Counters({ lanes }: { lanes: number }) {
+export function Counters({ lanes, statsRef }: { lanes: number; statsRef: StatsRef }) {
+  const lamps = useRef<(MeshBasicMaterial | null)[]>([])
   const signs = useMemo(() => Array.from({ length: lanes }, (_, i) => numberTexture(i + 1)), [lanes])
   useEffect(() => () => signs.forEach((t) => t.dispose()), [signs])
+  useFrame(() => {
+    const serving = statsRef.current.laneServing
+    for (let i = 0; i < lanes; i++) lamps.current[i]?.color.set(serving[i] ? '#7fe0a0' : '#5d6b66')
+  })
   return (
     <group>
       {Array.from({ length: lanes }, (_, i) => {
@@ -76,6 +91,10 @@ export function Counters({ lanes }: { lanes: number }) {
               <boxGeometry args={[0.04, 1.6, 0.04]} />
               <meshStandardMaterial color="#44574f" />
             </mesh>
+            <mesh position={[x, 3.45, DESK_Z - 0.5]}>
+              <sphereGeometry args={[0.09, 12, 8]} />
+              <meshBasicMaterial ref={(m) => { lamps.current[i] = m }} color="#5d6b66" />
+            </mesh>
             <mesh position={[x, 3.0, DESK_Z - 0.5]} castShadow>
               <planeGeometry args={[0.7, 0.7]} />
               <meshBasicMaterial map={signs[i]} />
@@ -83,7 +102,7 @@ export function Counters({ lanes }: { lanes: number }) {
           </group>
         )
       })}
-      <Cashiers lanes={lanes} />
+      <Cashiers lanes={lanes} statsRef={statsRef} />
     </group>
   )
 }

@@ -39,6 +39,12 @@ describe('frameAt', () => {
     expect([...b.state]).toEqual([HIDDEN, HIDDEN, HIDDEN])
   })
 
+  it('marks which lanes are serving', () => {
+    const b = makeBuffers(3)
+    const s = frameAt(journeys, 5, 'separate-jsq', 2, b)
+    expect([...s.laneServing]).toEqual([1, 0])
+  })
+
   it('reports mean wait only over customers who started service', () => {
     const b = makeBuffers(3)
     const s = frameAt(journeys, 12, 'separate-jsq', 2, b)

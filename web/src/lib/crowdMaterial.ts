@@ -14,7 +14,7 @@ export function createCrowdMaterial(): { material: MeshStandardMaterial; uTime: 
       .replace(
         '#include <common>',
         `#include <common>
-        attribute float aPart; attribute float aZone; attribute float aMove; attribute float aPhase; attribute float aArms;
+        attribute vec2 aPZ; attribute vec4 aAnim;
         attribute vec3 aShirt; attribute vec3 aPants; attribute vec3 aSkin; attribute vec3 aHair;
         uniform float uTime;
         varying float vZone; varying vec3 vShirt; varying vec3 vPants; varying vec3 vSkin; varying vec3 vHair;`,
@@ -22,12 +22,13 @@ export function createCrowdMaterial(): { material: MeshStandardMaterial; uTime: 
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        vZone = aZone; vShirt = aShirt; vPants = aPants; vSkin = aSkin; vHair = aHair;
+        float aPart = aPZ.x; vZone = aPZ.y; vShirt = aShirt; vPants = aPants; vSkin = aSkin; vHair = aHair;
+        float aMove = aAnim.x; float aPhase = aAnim.y; float aArms = aAnim.z; float aWork = aAnim.w;
         float s = sin(uTime * 8.0 + aPhase) * aMove;
         float ang = 0.0; float pivot = ${HIP_Y.toFixed(2)};
         if (aPart > 0.5 && aPart < 1.5) { ang = -s * 0.62; }
         else if (aPart > 1.5 && aPart < 2.5) { ang = s * 0.62; }
-        else if (aPart > 2.5) { pivot = ${SHOULDER_Y.toFixed(2)}; ang = aArms + (aPart < 3.5 ? s : -s) * 0.28; }
+        else if (aPart > 2.5) { pivot = ${SHOULDER_Y.toFixed(2)}; ang = aArms + (aPart < 3.5 ? s : -s) * 0.28 + sin(uTime * 6.0 + aPhase + (aPart < 3.5 ? 0.0 : 1.7)) * aWork * 0.22; }
         if (aPart > 0.5) {
           float dy = transformed.y - pivot;
           float nz = dy * sin(ang) + transformed.z * cos(ang);
