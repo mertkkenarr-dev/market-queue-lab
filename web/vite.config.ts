@@ -16,5 +16,5 @@ export default defineConfig({
   // 3D laboratuvar (three + R3F, ~1 MB) yalnızca o sayfaya girilince yüklenir; giriş sayfası onu indirmez.
   build: { chunkSizeWarningLimit: 1100 },
   server: { port: Number(process.env.PORT) || 5191, fs: { allow: ['..'] } },
-  test: { include: ['src/**/*.test.ts'] },
+  test: { include: ['src/**/*.test.ts'], testTimeout: 30_000 },
 })

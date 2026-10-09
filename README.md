@@ -1,5 +1,7 @@
 # market-queue-lab
 
+[![ci](https://github.com/mertkkenarr-dev/market-queue-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/mertkkenarr-dev/market-queue-lab/actions/workflows/ci.yml)
+
 One shared line, or a line for every checkout? A discrete-event simulation of supermarket checkouts, learned from real point-of-sale records
 (Antczak & Weron 2019, 163k transactions, CC BY-NC), validated against queueing theory and against a period the model never saw, and replayed in the
 browser as a 3D store. The site is in English and Turkish.

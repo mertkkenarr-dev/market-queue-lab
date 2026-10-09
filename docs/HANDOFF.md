@@ -1,7 +1,7 @@
 # Devir notu
 
 Durum: model v2 (geçiş süresi, kayıtlardan ölçülen kasa sayısı, ortak kuyruk saha etkileri) ve portföy sitesi tamam.
-GitHub'a itilmedi, barındırmaya bağlanmadı.
+Depo: https://github.com/mertkkenarr-dev/market-queue-lab (herkese açık, `main`). Barındırmaya henüz bağlanmadı; `web/dist` kişisel sitenin bir alt klasörüne kopyalanacak.
 
 ## Çalıştırma
 
