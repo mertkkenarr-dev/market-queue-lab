@@ -48,7 +48,7 @@ export function StoreScene({ journeys, layout, lanes, clock, statsRef }: Props) 
       <Environment />
       <Counters lanes={lanes} statsRef={statsRef} />
       <BeltItems journeys={journeys} lanes={lanes} clock={clock} />
-      {layout === 'pooled' && <PooledGuides />}
+      {layout === 'pooled' && <PooledGuides lanes={lanes} />}
       <Crowd journeys={journeys} layout={layout} lanes={lanes} clock={clock} statsRef={statsRef} />
       <EffectComposer multisampling={4}>
         <TiltShift2 blur={0.1} />

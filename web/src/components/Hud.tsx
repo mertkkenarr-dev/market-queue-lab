@@ -11,6 +11,7 @@ interface Props {
   customers: number
 }
 
+const OVERFLOW_AT = 40
 const fmtClock = (hour: number, t: number): string => {
   const total = hour * 60 + Math.floor(t / 60)
   return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
@@ -42,6 +43,9 @@ export function Hud({ clock, statsRef, hour, run, customers }: Props) {
         <div><dt>bekleyen müşteri payı</dt><dd className="num">%{Math.round(run.probWait * 100)}</dd></div>
         <div><dt>kasa doluluğu</dt><dd className="num">%{Math.round(run.utilization * 100)}</dd></div>
       </dl>
+      {view.stats.waiting > OVERFLOW_AT && (
+        <p className="hud-note">Kuyruk sahneye sığmıyor: sayı gerçek, ama fazla kişiler üst üste yığılarak çiziliyor.</p>
+      )}
       {finished && <p className="hud-note">Saat bitti. Yeniden başlat ya da ayarı değiştir.</p>}
     </aside>
   )

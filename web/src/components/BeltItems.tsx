@@ -39,7 +39,7 @@ export function BeltItems({ journeys, lanes, clock }: { journeys: readonly Journ
         slots[j.lane] = slot + 1
         const idx = j.lane * PER_LANE + slot
         used[idx] = 1
-        dummy.position.set(laneX(j.lane, lanes) + ((q % 3) - 1) * 0.1, 0.9, zFar - u * (zFar - zNear))
+        dummy.position.set(laneX(j.lane) + ((q % 3) - 1) * 0.1, 0.9, zFar - u * (zFar - zNear))
         dummy.scale.set(1, 1, 1)
         dummy.updateMatrix()
         m.setMatrixAt(idx, dummy.matrix)

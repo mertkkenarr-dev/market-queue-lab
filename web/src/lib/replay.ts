@@ -11,10 +11,12 @@ export interface AgentBuffers {
   tz: Float32Array
   state: Uint8Array
   waited: Float32Array
+  /** Kuyruktaki sıra (bekleyenler için); sıra ilerleme gecikmesi buna göre. */
+  rank: Uint16Array
 }
 
 export function makeBuffers(n: number): AgentBuffers {
-  return { tx: new Float32Array(n), tz: new Float32Array(n), state: new Uint8Array(n), waited: new Float32Array(n) }
+  return { tx: new Float32Array(n), tz: new Float32Array(n), state: new Uint8Array(n), waited: new Float32Array(n), rank: new Uint16Array(n) }
 }
 
 /**
@@ -32,6 +34,7 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
   const laneServing = new Uint8Array(lanes)
   let started = 0
   out.state.fill(HIDDEN)
+  out.rank.fill(0)
   for (let i = 0; i < journeys.length; i++) {
     const j = journeys[i] as Journey
     if (t < j.arrival) break
@@ -48,9 +51,10 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
       out.tz[i] = slot.z
       out.state[i] = WAITING
       out.waited[i] = t - j.arrival
+      out.rank[i] = rank
       waiting++
     } else if (t < j.end) {
-      const pos = servingPosition(j.lane, lanes)
+      const pos = servingPosition(j.lane)
       out.tx[i] = pos.x
       out.tz[i] = pos.z
       out.state[i] = SERVING

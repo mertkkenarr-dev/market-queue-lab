@@ -1,19 +1,6 @@
 import { InstancedBufferAttribute, type BufferGeometry } from 'three'
 import { personStyle, type PersonStyle } from './people'
 
-export interface AgentState {
-  x: Float32Array
-  z: Float32Array
-  yaw: Float32Array
-  move: Float32Array
-  /** 0 henüz görünmedi, 1 mağazada, 2 çıkışa yürüyor, 3 bitti (bu oynatmada bir daha çizilmez). */
-  phase: Uint8Array
-}
-
-export function makeAgentState(n: number): AgentState {
-  return { x: new Float32Array(n), z: new Float32Array(n), yaw: new Float32Array(n), move: new Float32Array(n), phase: new Uint8Array(n) }
-}
-
 const vec3 = (arr: Float32Array, i: number, c: { r: number; g: number; b: number }) => {
   arr[i * 3] = c.r
   arr[i * 3 + 1] = c.g

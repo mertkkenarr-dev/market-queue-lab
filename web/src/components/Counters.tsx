@@ -4,24 +4,24 @@ import { CanvasTexture, Object3D, SRGBColorSpace, type InstancedBufferAttribute,
 import { createCrowdMaterial } from '../lib/crowdMaterial'
 import { attachInstanceAttributes } from '../lib/crowdState'
 import { buildHumanoid } from '../lib/humanoid'
-import { BELT_LENGTH, DESK_Z, laneX } from '../lib/layout'
+import { BELT_LENGTH, DESK_Z, laneX, TOTAL_LANES } from '../lib/layout'
 import { STAFF_STYLE } from '../lib/people'
 import type { ReplayStats } from '../types/scenario'
 
 type StatsRef = { current: ReplayStats }
 
-function numberTexture(n: number): CanvasTexture {
+function numberTexture(n: number, open: boolean): CanvasTexture {
   const c = document.createElement('canvas')
   c.width = c.height = 128
   const g = c.getContext('2d')
   if (g) {
-    g.fillStyle = '#1f3d36'
+    g.fillStyle = open ? '#1f3d36' : '#9aa6a1'
     g.fillRect(0, 0, 128, 128)
-    g.fillStyle = '#f0d24a'
+    g.fillStyle = open ? '#f0d24a' : '#e4ebe8'
     g.font = '700 84px Instrument Sans, sans-serif'
     g.textAlign = 'center'
     g.textBaseline = 'middle'
-    g.fillText(String(n), 64, 70)
+    g.fillText(open ? String(n) : '×', 64, 70)
   }
   const t = new CanvasTexture(c)
   t.colorSpace = SRGBColorSpace
@@ -47,7 +47,7 @@ function Cashiers({ lanes, statsRef }: { lanes: number; statsRef: StatsRef }) {
     if (!m) return
     const d = new Object3D()
     for (let i = 0; i < lanes; i++) {
-      d.position.set(laneX(i, lanes), 0, DESK_Z - 0.85)
+      d.position.set(laneX(i), 0, DESK_Z - 0.85)
       d.updateMatrix()
       m.setMatrixAt(i, d.matrix)
     }
@@ -59,7 +59,7 @@ function Cashiers({ lanes, statsRef }: { lanes: number; statsRef: StatsRef }) {
 
 export function Counters({ lanes, statsRef }: { lanes: number; statsRef: StatsRef }) {
   const lamps = useRef<(MeshBasicMaterial | null)[]>([])
-  const signs = useMemo(() => Array.from({ length: lanes }, (_, i) => numberTexture(i + 1)), [lanes])
+  const signs = useMemo(() => Array.from({ length: TOTAL_LANES }, (_, i) => numberTexture(i + 1, i < lanes)), [lanes])
   useEffect(() => () => signs.forEach((t) => t.dispose()), [signs])
   useFrame(() => {
     const serving = statsRef.current.laneServing
@@ -67,18 +67,21 @@ export function Counters({ lanes, statsRef }: { lanes: number; statsRef: StatsRe
   })
   return (
     <group>
-      {Array.from({ length: lanes }, (_, i) => {
-        const x = laneX(i, lanes)
+      {Array.from({ length: TOTAL_LANES }, (_, i) => {
+        const x = laneX(i)
+        const open = i < lanes
         return (
           <group key={i}>
             <mesh position={[x + 0.35, 0.45, DESK_Z - 0.1]} castShadow receiveShadow>
               <boxGeometry args={[1.3, 0.9, 0.7]} />
-              <meshStandardMaterial color="#e9eeec" roughness={0.5} />
+              <meshStandardMaterial color={open ? '#e9eeec' : '#bcc6c2'} roughness={0.5} />
             </mesh>
-            <mesh position={[x + 0.5, 1.0, DESK_Z - 0.1]} castShadow>
-              <boxGeometry args={[0.32, 0.22, 0.28]} />
-              <meshStandardMaterial color="#2a3a35" roughness={0.4} />
-            </mesh>
+            {open && (
+              <mesh position={[x + 0.5, 1.0, DESK_Z - 0.1]} castShadow>
+                <boxGeometry args={[0.32, 0.22, 0.28]} />
+                <meshStandardMaterial color="#2a3a35" roughness={0.4} />
+              </mesh>
+            )}
             <mesh position={[x, 0.42, DESK_Z + 0.3 + BELT_LENGTH / 2]} castShadow receiveShadow>
               <boxGeometry args={[0.62, 0.84, BELT_LENGTH]} />
               <meshStandardMaterial color="#8c9a95" metalness={0.4} roughness={0.5} />
@@ -91,10 +94,12 @@ export function Counters({ lanes, statsRef }: { lanes: number; statsRef: StatsRe
               <boxGeometry args={[0.04, 1.6, 0.04]} />
               <meshStandardMaterial color="#44574f" />
             </mesh>
-            <mesh position={[x, 3.45, DESK_Z - 0.5]}>
-              <sphereGeometry args={[0.09, 12, 8]} />
-              <meshBasicMaterial ref={(m) => { lamps.current[i] = m }} color="#5d6b66" />
-            </mesh>
+            {open && (
+              <mesh position={[x, 3.45, DESK_Z - 0.5]}>
+                <sphereGeometry args={[0.09, 12, 8]} />
+                <meshBasicMaterial ref={(m) => { lamps.current[i] = m }} color="#5d6b66" />
+              </mesh>
+            )}
             <mesh position={[x, 3.0, DESK_Z - 0.5]} castShadow>
               <planeGeometry args={[0.7, 0.7]} />
               <meshBasicMaterial map={signs[i]} />

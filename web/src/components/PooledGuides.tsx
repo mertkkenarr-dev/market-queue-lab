@@ -1,4 +1,4 @@
-import { QUEUE_START_Z, STORE } from '../lib/layout'
+import { openLanesCenter, QUEUE_START_Z, STORE } from '../lib/layout'
 
 const X_HALF = 3.1
 const Z0 = QUEUE_START_Z - 0.4
@@ -8,10 +8,10 @@ const POSTS: [number, number][] = [
 ]
 
 /** Ortak kuyruğun direkli bariyeri: tek kıvrımlı blok kasalara bu çerçeveden dağılır. */
-export function PooledGuides() {
+export function PooledGuides({ lanes }: { lanes: number }) {
   const depth = Z1 - Z0
   return (
-    <group>
+    <group position={[openLanesCenter(lanes), 0, 0]}>
       {POSTS.map(([x, z]) => (
         <mesh key={`${x}${z}`} position={[x, 0.45, z]} castShadow>
           <cylinderGeometry args={[0.035, 0.05, 0.9, 10]} />
