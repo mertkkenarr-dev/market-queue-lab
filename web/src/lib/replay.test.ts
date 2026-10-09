@@ -24,11 +24,10 @@ describe('frameAt', () => {
     expect(b.tx[1]).not.toBe(b.tx[2])
   })
 
-  it('stacks waiting customers in one shared block when pooled', () => {
+  it('numbers pooled waiters in one shared line', () => {
     const b = makeBuffers(3)
     frameAt(journeys, 5, 'pooled', 2, b)
-    expect(b.tx[1]).not.toBe(b.tx[2])
-    expect(b.tz[1]).toBe(b.tz[2])
+    expect([b.rank[1], b.rank[2]]).toEqual([0, 1])
   })
 
   it('walks finished customers to the exit then hides them', () => {

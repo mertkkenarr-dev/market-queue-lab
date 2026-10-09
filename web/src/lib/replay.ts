@@ -46,7 +46,8 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
       const q = pooled ? 0 : j.lane
       const rank = queueCounts[q] as number
       queueCounts[q] = rank + 1
-      const slot = queueSlot(rank, j.lane, lanes, pooled)
+      // Ortak kuyrukta konumu kıvrımlı yol belirler (yalnızca sıra numarası gerekir); ayrı kuyrukta sabit yuva.
+      const slot = pooled ? { x: 0, z: 0 } : queueSlot(rank, j.lane)
       out.tx[i] = slot.x
       out.tz[i] = slot.z
       out.state[i] = WAITING

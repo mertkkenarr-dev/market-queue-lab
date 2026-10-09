@@ -1,9 +1,11 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
+import { useRef } from 'react'
 import { EffectComposer, TiltShift2 } from '@react-three/postprocessing'
 import { PCFSoftShadowMap } from 'three'
 import type { ClockRef } from '../hooks/usePlayback'
 import { COLORS } from '../lib/palette'
+import { SNAKE } from '../lib/serpentine'
 import type { Journey, LayoutKind, ReplayStats } from '../types/scenario'
 import { BeltItems } from './BeltItems'
 import { Counters } from './Counters'
@@ -22,6 +24,7 @@ interface Props {
 }
 
 export function StoreScene({ journeys, layout, lanes, clock, statsRef, compact = false }: Props) {
+  const snakeRows = useRef<number>(SNAKE.minRows)
   return (
     <Canvas shadows={{ type: PCFSoftShadowMap }} camera={{ position: compact ? [0, 18, 27] : [0, 15, 21], fov: 30 }} dpr={compact ? [1, 1.25] : [1, 1.75]}>
       <color attach="background" args={[COLORS.wall]} />
@@ -41,8 +44,8 @@ export function StoreScene({ journeys, layout, lanes, clock, statsRef, compact =
       <Environment />
       <Counters lanes={lanes} statsRef={statsRef} />
       <BeltItems journeys={journeys} lanes={lanes} clock={clock} />
-      {layout === 'pooled' && <PooledGuides lanes={lanes} />}
-      <Crowd journeys={journeys} layout={layout} lanes={lanes} clock={clock} statsRef={statsRef} />
+      {layout === 'pooled' && <PooledGuides lanes={lanes} rowsRef={snakeRows} />}
+      <Crowd journeys={journeys} layout={layout} lanes={lanes} clock={clock} statsRef={statsRef} snakeRows={snakeRows} />
       <EffectComposer multisampling={4}>
         <TiltShift2 blur={0.1} />
       </EffectComposer>
