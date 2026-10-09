@@ -6,12 +6,14 @@ import { basketContext, buildChannelSampler, expectedService, selfServiceShare, 
 
 interface Win {
   day: string; dow_group: string; hour: number
-  service_lanes: number; service_lanes_spread: number; self_machines: number; stable: boolean
+  service_lanes: number; service_lanes_proxy15: number; service_lanes_spread: number; self_machines: number; stable: boolean
   n_service: number; n_self: number
   basket_mean_service: number; basket_mean_self: number | null
   tran_mean_service: number; tran_mean_self: number | null
   util_service: number; util_self: number | null
+  gap_short_service: number | null; gap_median_service: number | null
 }
+type Scored = WindowResult & { gapShort: number; gapMedian: number }
 const REPS = 300
 function arg(name: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -20,7 +22,9 @@ function arg(name: string): string {
   return v
 }
 const params = parseParams(JSON.parse(readFileSync(arg('params'), 'utf8')))
-const windowsFile = JSON.parse(readFileSync(arg('windows'), 'utf8')) as { period: string; windows: Win[] }
+const windowsFile = JSON.parse(readFileSync(arg('windows'), 'utf8')) as { period: string; gap_short_seconds: number; gap_hist_service: number[]; windows: Win[] }
+const GAP_SHORT = windowsFile.gap_short_seconds
+const gapHist = new Float64Array(windowsFile.gap_hist_service.length)
 if (params.train_periods.includes(windowsFile.period)) {
   throw new Error(`SIZINTI: ${windowsFile.period} eğitim dönemlerinde (${params.train_periods.join(', ')}). Durduruldu.`)
 }
@@ -70,10 +74,18 @@ function samplerFor(channel: 'servis' | 'self-servis', w: Win) {
   return s
 }
 const sigma = params.arrival_profile.sigma_day
-type Metric = 'count' | 'basketMean' | 'serviceMean' | 'utilization' | 'meanWait' | 'waitP90' | 'probWait'
-const METRICS: Metric[] = ['count', 'basketMean', 'serviceMean', 'utilization', 'meanWait', 'waitP90', 'probWait']
+type Metric = 'count' | 'basketMean' | 'serviceMean' | 'utilization' | 'occupancy' | 'meanWait' | 'waitP90' | 'probWait' | 'gapShort' | 'gapMedian'
+const METRICS: Metric[] = ['count', 'basketMean', 'serviceMean', 'utilization', 'occupancy', 'meanWait', 'waitP90', 'probWait', 'gapShort', 'gapMedian']
 
-function summarizeReps(rows: WindowResult[]): Record<Metric, { p05: number; p50: number; p95: number; mean: number }> {
+/** Cashier-gap summaries; the observed-mode service lanes also feed the pooled gap histogram. */
+function score(r: WindowResult, histogram: boolean): Scored {
+  const g = r.gaps ?? []
+  const sorted = Float64Array.from(g).sort()
+  if (histogram) for (const v of g) gapHist[Math.min(gapHist.length - 1, Math.max(0, Math.floor(v)))]! += 1
+  return { ...r, gaps: undefined, gapShort: g.length ? g.filter((v) => v <= GAP_SHORT).length / g.length : Number.NaN, gapMedian: quantileSorted(sorted, 0.5) }
+}
+
+function summarizeReps(rows: Scored[]): Record<Metric, { p05: number; p50: number; p95: number; mean: number }> {
   const out = {} as Record<Metric, { p05: number; p50: number; p95: number; mean: number }>
   for (const m of METRICS) {
     const v = Float64Array.from(rows.map((r) => r[m]).filter((x) => Number.isFinite(x))).sort()
@@ -83,11 +95,15 @@ function summarizeReps(rows: WindowResult[]): Record<Metric, { p05: number; p50:
 }
 
 const results = windows.map((w, wi) => {
+  // Fractional open lanes (time-weighted) become an integer per replication by unbiased random rounding,
+  // so the average simulated capacity equals the measured one instead of being rounded up or down.
+  const laneRng = new Random(424_243 * (wi + 1))
+  const laneDraws = Array.from({ length: REPS }, () => Math.max(1, Math.floor(w.service_lanes) + (laneRng.bernoulli(w.service_lanes % 1) ? 1 : 0)))
   const lanes = Math.max(1, Math.round(w.service_lanes))
   const machines = Math.max(1, Math.round(w.self_machines))
   const profile = params.arrival_profile.per_second_by_group_hour[w.dow_group]?.[String(w.hour)] ?? 0
   const share = selfServiceShare(params, w.hour)
-  const modes: Record<'observed' | 'predicted', { servis: WindowResult[]; self: WindowResult[] }> = {
+  const modes: Record<'observed' | 'predicted', { servis: Scored[]; self: Scored[] }> = {
     observed: { servis: [], self: [] }, predicted: { servis: [], self: [] },
   }
   for (let r = 0; r < REPS; r++) {
@@ -100,9 +116,10 @@ const results = windows.map((w, wi) => {
         const lam = profile * Math.exp(sigma * rng.normal() - (sigma * sigma) / 2)
         rateV = (1 - share) * lam * scales.trafficV; rateS = share * lam * scales.trafficS
       }
-      modes[mode].servis.push(simulateWindow(samplerFor('servis', w), { rate: rateV, fixedCount: fixedV, servers: lanes, layout: 'separate-jsq' }, rng, r))
+      const gaps = mode === 'observed'
+      modes[mode].servis.push(score(simulateWindow(samplerFor('servis', w), { rate: rateV, fixedCount: fixedV, servers: laneDraws[r] as number, layout: 'separate-jsq', gaps }, rng, r), gaps))
       if (rateS > 0 || (fixedS ?? 0) > 0) {
-        modes[mode].self.push(simulateWindow(samplerFor('self-servis', w), { rate: rateS, fixedCount: fixedS, servers: machines, layout: 'pooled' }, rng, r + 31))
+        modes[mode].self.push(score(simulateWindow(samplerFor('self-servis', w), { rate: rateS, fixedCount: fixedS, servers: machines, layout: 'pooled' }, rng, r + 31), false))
       }
     }
   }
@@ -115,6 +132,8 @@ const results = windows.map((w, wi) => {
 writeFileSync(arg('out'), JSON.stringify({
   meta: { train_periods: params.train_periods, test_period: windowsFile.period, reps: REPS, sigma_day: sigma, basket_context: useContext, calib_days: calibDays, recalibrated: recalibrate, scales,
           note: 'observed: gözlenen müşteri sayısına koşullu; predicted: yalnızca eğitim profili + gün çarpanı. Kasa sayısı iki modda da gözlenen (personel kararı girdidir).' },
+  gap_short_seconds: GAP_SHORT,
+  gap_hist: { real: windowsFile.gap_hist_service, sim: Array.from(gapHist, (v) => v / REPS) },
   windows: results,
 }))
 console.log(`Yazıldı: ${results.length} pencere x 2 mod x ${REPS} tekrar`)

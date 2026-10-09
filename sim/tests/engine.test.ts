@@ -201,3 +201,66 @@ describe('arrival generation', () => {
     ).toThrow()
   })
 })
+
+describe('lane mechanics: changeover, walk from a pooled queue, slowdown', () => {
+  const rng = new Random(11)
+  const base = generateCustomers(
+    { rate: () => 2.2, rateMax: 2.2, horizon: 4000, sampleService: (r) => r.exponential(1) }, rng)
+  const withCo = base.map((c, i) => ({ ...c, changeover: 0.1 + 0.3 * ((i * 7) % 5) / 4 }))
+  const folded = withCo.map((c) => ({ id: c.id, arrival: c.arrival, service: c.service + (c.changeover ?? 0) }))
+
+  for (const layout of ['pooled', 'separate-jsq'] as const) {
+    it(`${layout}: changeover blocks the lane exactly like extra service time, but is not scanning`, () => {
+      const cfg = { servers: 3, layout, warmup: 400, horizon: 4000, routingSeed: 3, trace: true }
+      const a = simulate(withCo, cfg)
+      const b = simulate(folded, cfg)
+      expect(a.meanWait).toBeCloseTo(b.meanWait, 9)
+      expect(a.utilization).toBeCloseTo(b.utilization, 9)
+      expect(a.scanUtilization).toBeLessThan(a.utilization)
+      for (const t of a.trace!) expect(t.end - t.scanEnd).toBeCloseTo(withCo[t.id]!.changeover!, 9)
+    })
+  }
+
+  it('pooled: a called customer walks to the lane; the lane is held (not reused) during the walk', () => {
+    const walkToServer = [2, 4, 6]
+    const res = simulate(base, { servers: 3, layout: 'pooled', warmup: 400, horizon: 4000, trace: true, walkToServer })
+    const trace = res.trace!
+    let walked = 0
+    for (const t of trace) {
+      if (t.called > t.arrival + 1e-12) {
+        expect(t.start - t.called).toBeCloseTo(walkToServer[t.server]!, 9)
+        walked++
+      } else {
+        expect(t.start).toBe(t.arrival)
+      }
+    }
+    expect(walked).toBeGreaterThan(100)
+    const byServer = new Map<number, typeof trace>()
+    for (const t of trace) byServer.set(t.server, [...(byServer.get(t.server) ?? []), t])
+    for (const rows of byServer.values()) {
+      rows.sort((x, y) => x.called - y.called)
+      for (let i = 1; i < rows.length; i++) expect(rows[i]!.called).toBeGreaterThanOrEqual(rows[i - 1]!.end - 1e-9)
+    }
+    expect(res.meanWait).toBeGreaterThan(simulate(base, { servers: 3, layout: 'pooled', warmup: 400, horizon: 4000 }).meanWait)
+  })
+
+  it('walk applies only to the pooled layout', () => {
+    const cfg = { servers: 3, layout: 'separate-jsq' as const, warmup: 400, horizon: 4000, routingSeed: 2 }
+    expect(simulate(base, { ...cfg, walkToServer: [5, 5, 5] })).toEqual(simulate(base, cfg))
+  })
+
+  it('service multiplier stretches scanning and nothing else', () => {
+    const res = simulate(withCo, { servers: 3, layout: 'pooled', warmup: 400, horizon: 4000, trace: true, serviceMultiplier: 1.1 })
+    for (const t of res.trace!) expect(t.scanEnd - t.start).toBeCloseTo(withCo[t.id]!.service * 1.1, 9)
+    expect(() => simulate(base, { servers: 1, layout: 'pooled', warmup: 0, horizon: 10, serviceMultiplier: 0 })).toThrow()
+  })
+
+  it("Little's law still holds with changeover and walking", () => {
+    const light = generateCustomers(
+      { rate: () => 1.4, rateMax: 1.4, horizon: 20000, sampleService: (r) => r.exponential(1) }, new Random(12),
+    ).map((c) => ({ ...c, changeover: 0.25 }))
+    const r = simulate(light, { servers: 3, layout: 'pooled', warmup: 2000, horizon: 20000, walkToServer: [0.2, 0.4, 0.6] })
+    expect(r.utilization).toBeLessThan(0.9)
+    expect(Math.abs(r.meanInSystem - r.arrivalRate * r.meanSojourn) / r.meanInSystem).toBeLessThan(0.03)
+  })
+})

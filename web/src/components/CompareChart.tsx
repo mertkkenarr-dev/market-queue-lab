@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ClockRef } from '../hooks/usePlayback'
-import { LAYOUT_SHORT, LAYOUTS } from '../lib/layoutNames'
+import { useI18n } from '../i18n/context'
+import { LAYOUTS } from '../lib/layoutNames'
 import type { WaitingSeries } from '../lib/series'
 import type { LayoutKind } from '../types/scenario'
 
@@ -14,13 +15,10 @@ interface Props {
 const W = 720
 const H = 240
 const M = { l: 44, r: 150, t: 16, b: 32 }
-const clockLabel = (hour: number, t: number): string => {
-  const total = hour * 60 + Math.round(t / 60)
-  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-}
 
 /** Üç düzenin kuyruk uzunluğu, aynı müşteri akışında. Dikey çizgi oynatma anıdır. */
 export function CompareChart({ series, hour, endTime, clock }: Props) {
+  const { t: tr, f } = useI18n()
   const [t, setT] = useState(0)
   useEffect(() => {
     const id = window.setInterval(() => setT(clock.current.t), 100)
@@ -34,11 +32,11 @@ export function CompareChart({ series, hour, endTime, clock }: Props) {
   const line = (s: WaitingSeries): string => Array.from(s.waiting, (v, i) => `${x(i * s.step).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
   const at = (s: WaitingSeries): number => s.waiting[Math.min(s.waiting.length - 1, Math.floor(t / s.step))] ?? 0
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * Math.min(endTime, 3600))
-  const label = `Kuyrukta bekleyen sayısı. Zirve: ${LAYOUTS.map((k) => `${LAYOUT_SHORT[k]} ${series[k].peak}`).join(', ')}.`
+  const label = tr.compare.chartLabel(LAYOUTS.map((k) => `${tr.layoutShort[k]} ${series[k].peak}`).join(', '))
 
   return (
     <figure className="chart">
-      <figcaption>Kuyruktaki kişi sayısı, saat boyunca</figcaption>
+      <figcaption>{tr.compare.chartCaption}</figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
         {[0, 0.5, 1].map((f) => (
           <g key={f}>
@@ -47,7 +45,7 @@ export function CompareChart({ series, hour, endTime, clock }: Props) {
           </g>
         ))}
         {ticks.map((sec) => (
-          <text key={sec} x={x(sec)} y={H - 8} textAnchor="middle" className="num axis">{clockLabel(hour, sec)}</text>
+          <text key={sec} x={x(sec)} y={H - 8} textAnchor="middle" className="num axis">{f.clock(hour, sec)}</text>
         ))}
         {LAYOUTS.map((k) => <polyline key={k} points={line(series[k])} className={`series ${k}`} />)}
         <line x1={x(t)} x2={x(t)} y1={M.t} y2={H - M.b} className="playhead" />
@@ -56,7 +54,7 @@ export function CompareChart({ series, hour, endTime, clock }: Props) {
           {LAYOUTS.map((k, i) => (
             <g key={k} transform={`translate(0, ${i * 22})`}>
               <line x1="0" x2="24" y1="0" y2="0" className={`series ${k}`} />
-              <text x="32" y="4" className="tag">{LAYOUT_SHORT[k]}</text>
+              <text x="32" y="4" className="tag">{tr.layoutShort[k]}</text>
             </g>
           ))}
         </g>

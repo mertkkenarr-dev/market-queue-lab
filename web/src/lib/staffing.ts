@@ -1,5 +1,5 @@
 import type { StoreParams } from '@sim/params'
-import { basketContext, expectedService, selfServiceShare } from '@sim/store'
+import { basketContext, expectedChangeover, expectedService, selfServiceShare } from '@sim/store'
 import { summarize } from '@sim/stats'
 import type { DowGroup } from '../types/scenario'
 import { TOTAL_LANES } from './layout'
@@ -16,7 +16,8 @@ export interface StaffingRow {
   hour: number
   scenario: Scenario
   lamPerHour: number
-  meanService: number
+  /** Müşteri başına kasa meşguliyeti (tarama + geçiş), sn. */
+  meanOccupancy: number
   /** Hedefi sağlayan en az kasa; yoksa null (10 kasayla bile sağlanamıyor). */
   lanes: number | null
   predP90: number | null
@@ -38,8 +39,9 @@ export function planDay(model: SurrogateModel, params: StoreParams, day: DowGrou
     const hour = Number(key)
     if (hour < 8 || hour > 21) continue
     const lam = (profile[key] as number) * 3600 * (1 - selfServiceShare(params, hour)) * mult
-    const es = expectedService(params, 'servis', basketContext(day, hour))
-    const p90 = (c: number): number => predict(model, { lanes: c, pooled: layout === 'pooled', rho: rhoOf(lam, es, c), meanService: es }).waitP90
+    const ctx = basketContext(day, hour)
+    const es = expectedService(params, 'servis', ctx) + expectedChangeover(params, 'servis', ctx)
+    const p90 = (c: number): number => predict(model, { lanes: c, pooled: layout === 'pooled', rho: rhoOf(lam, es, c), meanOccupancy: es }).waitP90
     let lanes: number | null = null
     for (let c = 1; c <= TOTAL_LANES; c++) {
       if (rhoOf(lam, es, c) < MAX_RHO && p90(c) <= targetP90) {
@@ -47,7 +49,7 @@ export function planDay(model: SurrogateModel, params: StoreParams, day: DowGrou
         break
       }
     }
-    rows.push({ hour, scenario, lamPerHour: lam, meanService: es, lanes, predP90: lanes ? p90(lanes) : null, predP90OneLess: lanes && lanes > 1 ? p90(lanes - 1) : null })
+    rows.push({ hour, scenario, lamPerHour: lam, meanOccupancy: es, lanes, predP90: lanes ? p90(lanes) : null, predP90OneLess: lanes && lanes > 1 ? p90(lanes - 1) : null })
   }
   return rows
 }
@@ -59,12 +61,12 @@ export interface Verification {
   meets: number
 }
 
-/** Planı gerçek simülatörle sınar: aynı müşteri akışı, `reps` tekrar, ortalama gün talebi. */
+/** Planı gerçek simülatörle sınar: aynı müşteri akışı, `reps` tekrar, ortalama gün talebi, saha modeli (vekil de onunla eğitildi). */
 export function verifyLanes(params: StoreParams, day: DowGroup, hour: number, lanes: number, layout: StaffingLayout, targetP90: number, reps = 40): Verification {
   const p90s: number[] = []
   for (let r = 0; r < reps; r++) {
     const stream = buildStream(params, day, hour, 5000 + r)
-    if (stream.customers.length > 0) p90s.push(runSummary(stream, lanes, layout).waitP90)
+    if (stream.customers.length > 0) p90s.push(runSummary(stream, lanes, layout, 'saha').waitP90)
   }
   if (p90s.length === 0) return { p90: 0, meets: 1 }
   return { p90: summarize(p90s).mean, meets: p90s.filter((v) => v <= targetP90).length / p90s.length }

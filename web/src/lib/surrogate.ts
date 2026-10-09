@@ -9,7 +9,7 @@ const tree = z.object({
 })
 const target = z.object({ baseline: z.number(), trees: z.array(tree).min(1) })
 const schema = z.object({
-  features: z.tuple([z.literal('lanes'), z.literal('pooled'), z.literal('rho'), z.literal('mean_service')]),
+  features: z.tuple([z.literal('lanes'), z.literal('pooled'), z.literal('rho'), z.literal('mean_occupancy')]),
   targets: z.object({ wait_mean: target, wait_p90: target, p_wait: target }),
 })
 
@@ -43,10 +43,10 @@ function evaluate(t: { baseline: number; trees: readonly Tree[] }, x: readonly n
 export interface SurrogateInput {
   lanes: number
   pooled: boolean
-  /** Yük oranı ρ = λ·E[S] / (c·3600). */
+  /** Yük oranı ρ = λ·E[meşguliyet] / (c·3600). */
   rho: number
-  /** Ortalama servis süresi (sn). */
-  meanService: number
+  /** Müşteri başına ortalama kasa meşguliyeti: tarama + geçiş (sn). */
+  meanOccupancy: number
 }
 
 export interface SurrogateOutput {
@@ -56,7 +56,7 @@ export interface SurrogateOutput {
 }
 
 export function predict(m: SurrogateModel, i: SurrogateInput): SurrogateOutput {
-  const x = [i.lanes, i.pooled ? 1 : 0, i.rho, i.meanService]
+  const x = [i.lanes, i.pooled ? 1 : 0, i.rho, i.meanOccupancy]
   return {
     meanWait: Math.expm1(evaluate(m.targets.wait_mean, x)),
     waitP90: Math.expm1(evaluate(m.targets.wait_p90, x)),

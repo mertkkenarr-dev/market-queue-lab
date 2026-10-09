@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { describeComparison, type LayoutStats, type PairedComparison } from './compare'
+import { UI } from '../i18n/ui'
+import { describeComparison as describe2, type LayoutStats, type PairedComparison } from './compare'
+import { makeFormat } from './format'
+
+const describeComparison = (c: PairedComparison): string => describe2(c, UI.tr.compare, makeFormat('tr'))
 
 const sum = (mean: number, lo: number, hi: number) => ({ n: 30, mean, sd: 1, se: 1, ciLow: lo, ciHigh: hi })
 const stats = (m: number): LayoutStats => ({ meanWait: sum(m, m - 5, m + 5), waitP90: 1, probWait: 1, utilization: 1 })
@@ -21,5 +25,13 @@ describe('describeComparison', () => {
   it('reports the clear gain against both when both intervals exclude zero', () => {
     const t = describeComparison(make(sum(100, 90, 110), sum(10, 5, 15)))
     expect(t.match(/kısaltıyor/g)?.length).toBe(2)
+  })
+})
+
+describe('describeComparison in English', () => {
+  it('uses the same rule with English words', () => {
+    const t = describe2(make(sum(100, 90, 110), sum(2, -3, 7)), UI.en.compare, makeFormat('en'))
+    expect(t).toContain('cuts the mean wait by 1 min 40 s')
+    expect(t).toContain('makes no clear difference compared with joining the shortest line')
   })
 })

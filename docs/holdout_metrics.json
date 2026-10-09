@@ -3,153 +3,174 @@
     "Ort. sepet (servis)": {
       "mode": "observed",
       "n": 182,
-      "bias_pct": -6.073182855621215,
-      "mape_pct": 10.06225139707795,
-      "coverage_pct": 61.53846153846154
+      "bias_pct": -6.087007198568704,
+      "mape_pct": 10.06215294820353,
+      "coverage_pct": 60.98901098901099
     },
     "Ort. servis süresi (servis)": {
       "mode": "observed",
       "n": 182,
-      "bias_pct": -0.0442694281301307,
-      "mape_pct": 6.790474225799972,
-      "coverage_pct": 73.62637362637363
+      "bias_pct": -0.026159038509860823,
+      "mape_pct": 6.814055288019759,
+      "coverage_pct": 73.07692307692307
     },
     "Kasa doluluğu (servis)": {
       "mode": "observed",
-      "n": 93,
-      "bias_pct": -0.8804357031005544,
-      "mape_pct": 9.324314904246117,
-      "coverage_pct": 59.13978494623656
+      "n": 51,
+      "bias_pct": 2.3340767397640056,
+      "mape_pct": 5.568155056465021,
+      "coverage_pct": 90.19607843137256
     },
     "Ort. sepet (self-servis)": {
       "mode": "observed",
       "n": 182,
-      "bias_pct": -0.21739292934208337,
-      "mape_pct": 13.215219297472997,
+      "bias_pct": -0.10452443326274653,
+      "mape_pct": 13.345036709795618,
       "coverage_pct": 88.46153846153845
     },
     "Ort. servis süresi (self-servis)": {
       "mode": "observed",
       "n": 182,
-      "bias_pct": -0.32854305134449124,
-      "mape_pct": 9.373268396959105,
-      "coverage_pct": 90.65934065934066
+      "bias_pct": -0.21188686857757966,
+      "mape_pct": 9.491815526436595,
+      "coverage_pct": 90.10989010989012
     },
     "Saatlik müşteri sayısı (servis)": {
       "mode": "predicted",
       "n": 182,
-      "bias_pct": 46.87390877724052,
-      "mape_pct": 48.003514288797476,
-      "coverage_pct": 40.10989010989011
+      "bias_pct": 46.92439981816144,
+      "mape_pct": 48.092494007359804,
+      "coverage_pct": 40.65934065934066
     },
     "Saatlik müşteri sayısı (self-servis)": {
       "mode": "predicted",
       "n": 182,
-      "bias_pct": 158.03902817559515,
-      "mape_pct": 158.03902817559515,
-      "coverage_pct": 4.395604395604396
+      "bias_pct": 157.4327389210452,
+      "mape_pct": 157.4327389210452,
+      "coverage_pct": 3.296703296703297
+    },
+    "Kısa kasiyer boşluğu payı (≤30 sn)": {
+      "mode": "observed",
+      "n": 182,
+      "bias_pct": -5.12317557726056,
+      "mape_pct": 10.741250963742397,
+      "coverage_pct": 90.65934065934066
     }
   },
   "P1+P2→P3": {
     "Ort. sepet (servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": -10.456544970698193,
-      "mape_pct": 12.794348709178728,
-      "coverage_pct": 44.19889502762431
+      "bias_pct": -10.495507669029621,
+      "mape_pct": 12.796209869038238,
+      "coverage_pct": 44.751381215469614
     },
     "Ort. servis süresi (servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": 6.119369003336391,
-      "mape_pct": 8.655955009819788,
-      "coverage_pct": 62.430939226519335
+      "bias_pct": 6.15435705731772,
+      "mape_pct": 8.665407555931912,
+      "coverage_pct": 63.53591160220995
     },
     "Kasa doluluğu (servis)": {
       "mode": "observed",
-      "n": 90,
-      "bias_pct": 4.1968799665555885,
-      "mape_pct": 9.546003711417589,
-      "coverage_pct": 57.77777777777777
+      "n": 55,
+      "bias_pct": 4.101472249374499,
+      "mape_pct": 6.484982189835637,
+      "coverage_pct": 92.72727272727272
     },
     "Ort. sepet (self-servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": -0.2000656611664714,
-      "mape_pct": 12.560578818583396,
-      "coverage_pct": 85.0828729281768
+      "bias_pct": -0.23775742052781837,
+      "mape_pct": 12.583651531334247,
+      "coverage_pct": 85.6353591160221
     },
     "Ort. servis süresi (self-servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": 0.7092633672215746,
-      "mape_pct": 8.985130660132041,
-      "coverage_pct": 88.39779005524862
+      "bias_pct": 0.7502822201418249,
+      "mape_pct": 9.095700733571414,
+      "coverage_pct": 90.05524861878453
     },
     "Saatlik müşteri sayısı (servis)": {
       "mode": "predicted",
       "n": 181,
-      "bias_pct": 12.745196286137398,
-      "mape_pct": 22.620803846295363,
-      "coverage_pct": 92.26519337016575
+      "bias_pct": 12.76720056215544,
+      "mape_pct": 22.57296262693466,
+      "coverage_pct": 92.81767955801105
     },
     "Saatlik müşteri sayısı (self-servis)": {
       "mode": "predicted",
       "n": 181,
-      "bias_pct": 38.74066147620241,
-      "mape_pct": 39.227643189285416,
-      "coverage_pct": 92.26519337016575
+      "bias_pct": 38.69534021821325,
+      "mape_pct": 39.151507612242426,
+      "coverage_pct": 92.81767955801105
+    },
+    "Kısa kasiyer boşluğu payı (≤30 sn)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -2.032673297144505,
+      "mape_pct": 7.947852563120346,
+      "coverage_pct": 93.37016574585635
     }
   },
   "P2→P3": {
     "Ort. sepet (servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": -6.685832854120336,
-      "mape_pct": 10.708183388151186,
-      "coverage_pct": 54.14364640883977
+      "bias_pct": -6.719629445331574,
+      "mape_pct": 10.723437297491953,
+      "coverage_pct": 51.93370165745856
     },
     "Ort. servis süresi (servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": 5.554772779845629,
-      "mape_pct": 8.351246719720287,
+      "bias_pct": 5.576818438427698,
+      "mape_pct": 8.316664011836936,
       "coverage_pct": 62.98342541436463
     },
     "Kasa doluluğu (servis)": {
       "mode": "observed",
-      "n": 90,
-      "bias_pct": 3.671715316275933,
-      "mape_pct": 9.185742837322618,
-      "coverage_pct": 56.666666666666664
+      "n": 55,
+      "bias_pct": 3.046225716572007,
+      "mape_pct": 5.809922547223226,
+      "coverage_pct": 94.54545454545455
     },
     "Ort. sepet (self-servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": -1.3308239053329742,
-      "mape_pct": 12.4147654385774,
-      "coverage_pct": 86.74033149171271
+      "bias_pct": -1.3900100279991232,
+      "mape_pct": 12.405287572934027,
+      "coverage_pct": 84.5303867403315
     },
     "Ort. servis süresi (self-servis)": {
       "mode": "observed",
       "n": 181,
-      "bias_pct": -0.3818068260618464,
-      "mape_pct": 9.200564925451413,
-      "coverage_pct": 85.6353591160221
+      "bias_pct": -0.35211128002036,
+      "mape_pct": 9.224915285890466,
+      "coverage_pct": 87.29281767955801
     },
     "Saatlik müşteri sayısı (servis)": {
       "mode": "predicted",
       "n": 181,
-      "bias_pct": -4.067374675730089,
-      "mape_pct": 17.45570234009339,
-      "coverage_pct": 86.1878453038674
+      "bias_pct": -4.085847796073578,
+      "mape_pct": 17.560879473911367,
+      "coverage_pct": 84.5303867403315
     },
     "Saatlik müşteri sayısı (self-servis)": {
       "mode": "predicted",
       "n": 181,
-      "bias_pct": -4.147623848970263,
-      "mape_pct": 18.814671601149854,
-      "coverage_pct": 93.37016574585635
+      "bias_pct": -4.183707003562753,
+      "mape_pct": 18.704839106755315,
+      "coverage_pct": 91.71270718232044
+    },
+    "Kısa kasiyer boşluğu payı (≤30 sn)": {
+      "mode": "observed",
+      "n": 181,
+      "bias_pct": -3.561376321585667,
+      "mape_pct": 7.810846941041878,
+      "coverage_pct": 91.16022099447514
     }
   }
 }

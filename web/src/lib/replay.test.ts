@@ -3,9 +3,9 @@ import type { Journey } from '../types/scenario'
 import { frameAt, HIDDEN, LEAVING, makeBuffers, SERVING, WAITING } from './replay'
 
 const journeys: Journey[] = [
-  { arrival: 0, start: 0, end: 10, lane: 0, items: 5 },
-  { arrival: 1, start: 10, end: 20, lane: 0, items: 5 },
-  { arrival: 2, start: 10, end: 15, lane: 1, items: 5 },
+  { arrival: 0, called: 0, start: 0, scanEnd: 10, end: 10, lane: 0, items: 5 },
+  { arrival: 1, called: 10, start: 10, scanEnd: 20, end: 20, lane: 0, items: 5 },
+  { arrival: 2, called: 10, start: 10, scanEnd: 15, end: 15, lane: 1, items: 5 },
 ]
 
 describe('frameAt', () => {
@@ -48,5 +48,17 @@ describe('frameAt', () => {
     const b = makeBuffers(3)
     const s = frameAt(journeys, 12, 'separate-jsq', 2, b)
     expect(s.meanWaitStarted).toBeCloseTo((0 + 9 + 8) / 3)
+  })
+
+  it('a customer called from the shared queue walks to the lane: not waiting, lane already held', () => {
+    const walk: Journey[] = [
+      { arrival: 0, called: 0, start: 0, scanEnd: 10, end: 12, lane: 0, items: 5 },
+      { arrival: 1, called: 12, start: 16, scanEnd: 30, end: 33, lane: 0, items: 5 },
+    ]
+    const b = makeBuffers(2)
+    const s = frameAt(walk, 14, 'pooled', 1, b)
+    expect(b.state[1]).toBe(SERVING)
+    expect(s.waiting).toBe(0)
+    expect([...s.laneServing]).toEqual([1])
   })
 })

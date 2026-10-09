@@ -278,6 +278,35 @@ params["arrival_profile"] = {"per_second_by_group_hour": profile, "days_in_train
                              "sigma_day": sigma_day, "group_of_dow": {str(k): v for k, v in GROUP_OF.items()},
                              "note": "dow: DuckDB (0=Pazar). Oran = gün başına ortalama işlem / 3600."}
 
+# ---------------------------------------------------------------- 7) Kasa geçiş süresi (changeover)
+# BreakTime = aynı kasiyerde bu işlemin bitişi ile sonraki işlemin başlangıcı arası (veride %99,3 eşleşme, bkz. docs/MODEL.md).
+# Kasiyer kesintisiz meşgulken (kuyruk varken) bu boşluk boşta bekleme değil, kasanın bir sonraki müşteriye geçiş süresidir:
+# ödemenin kapanması, poşetleme, sıradaki sepetin banda gelmesi. Bu yüzden yalnızca "doymuş" kasiyer-saatlerinden öğrenilir
+# (tarama + kısa boşluklar saatin >= %92'sini dolduruyor). Boşluk, işlemi yapan müşterinin ödeme türüne bağlı (nakit uzun).
+CO_MAX = 60
+co = con.execute(
+    f"""
+WITH t AS (SELECT *, date_trunc('hour', BeginDateTime) hr FROM transactions WHERE {CLEAN}),
+occ AS (SELECT period, WorkstationGroupID g, OperatorID, hr, sum(TranTime) + sum(least(BreakTime, 120)) busy
+        FROM t GROUP BY ALL)
+SELECT t.WorkstationGroupID g, t.TNcard::int card, t.BreakTime gap
+FROM t JOIN occ USING (period, OperatorID, hr)
+WHERE occ.g = t.WorkstationGroupID AND occ.busy >= 3300 AND t.BreakTime BETWEEN 0 AND {CO_MAX}"""
+).df()
+QS = np.linspace(0, 1, 101)
+changeover = {"max_seconds": CO_MAX, "quantiles_at": "0..1 step 0.01"}
+for g, name in [(1, "servis"), (8, "self-servis")]:
+    d = co[co.g == g]
+    by = {}
+    for card, label in [(0, "cash"), (1, "card")]:
+        x = d.loc[d.card == card, "gap"].to_numpy(float)
+        # Tam sayı saniyeler: kantil tablosu +-0,5 sn titretilerek sürekli hale getirilir (yığılma çizgileri olmasın).
+        jitter = np.random.default_rng(card).uniform(-0.5, 0.5, len(x))
+        by[label] = {"n": int(len(x)), "mean": float(x.mean()), "quantiles": [float(v) for v in np.quantile(np.clip(x + jitter, 0, CO_MAX), QS)]}
+    changeover[name] = by
+    print(f"[geçiş {name}] nakit ort={by['cash']['mean']:.1f} sn (n={by['cash']['n']:,}), kart ort={by['card']['mean']:.1f} sn (n={by['card']['n']:,})")
+params["changeover"] = changeover
+
 out = ROOT / args.out
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(params, indent=2, ensure_ascii=False))

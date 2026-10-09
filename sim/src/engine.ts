@@ -7,6 +7,11 @@ export interface Customer {
   arrival: number
   /** Service time is fixed when the customer is generated, so the same stream replays identically under any layout. */
   service: number
+  /**
+   * Seconds the lane stays blocked after scanning ends (payment wrap-up, bagging, the next basket reaching the
+   * scanner). Measured in the data as the gap between consecutive transactions of a busy cashier.
+   */
+  changeover?: number
 }
 
 export type Layout = 'pooled' | 'separate-random' | 'separate-jsq'
@@ -14,7 +19,13 @@ export type Layout = 'pooled' | 'separate-random' | 'separate-jsq'
 export interface TraceRecord {
   id: number
   arrival: number
+  /** The lane became free for this customer (equals `start` unless they had to walk from a pooled queue). */
+  called: number
+  /** Customer reaches the counter; waiting ends here. */
   start: number
+  /** Scanning ends (what the POS data records as the end of a transaction). */
+  scanEnd: number
+  /** Lane is released (scanning + changeover); the customer leaves. */
   end: number
   server: number
 }
@@ -31,6 +42,13 @@ export interface SimConfig {
   waitThresholds?: readonly number[]
   /** Record every customer's journey (for invariant tests and animation replay). */
   trace?: boolean
+  /** Multiplies every scanning time. Used for the pooled-queue slowdown measured by Wang & Zhou (2018). */
+  serviceMultiplier?: number
+  /**
+   * Pooled layout only: seconds a customer called from the shared queue needs to reach server s. The lane is
+   * reserved (and idle) during the walk. In separate queues the next customer already stands at the belt.
+   */
+  walkToServer?: readonly number[]
 }
 
 export interface SimResult {
@@ -47,7 +65,10 @@ export interface SimResult {
   waitP99: number
   meanQueueLength: number
   meanInSystem: number
+  /** Share of lane time occupied (walk-in, scanning and changeover). */
   utilization: number
+  /** Share of lane time spent scanning only; comparable to TranTime-based utilisation in the POS data. */
+  scanUtilization: number
   serverUtilization: number[]
   maxQueueLength: number
   fractionWaitingAtMost: number[]
@@ -78,6 +99,10 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
 
   const rng = new Random(cfg.routingSeed ?? 1)
   const pooled = layout === 'pooled'
+  const mult = cfg.serviceMultiplier ?? 1
+  if (!(mult > 0)) throw new Error(`serviceMultiplier must be positive, got ${mult}`)
+  const walk = pooled ? cfg.walkToServer : undefined
+  let scanTime = 0
   const queues: Fifo<Customer>[] = Array.from({ length: pooled ? 1 : c }, () => new Fifo<Customer>())
   const busy: boolean[] = new Array<boolean>(c).fill(false)
   const busyTime: number[] = new Array<number>(c).fill(0)
@@ -106,17 +131,22 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
     last = t
   }
 
-  const startService = (server: number, customer: Customer, t: number): void => {
+  const overlap = (a: number, b: number): number => Math.max(0, Math.min(b, w1) - Math.max(a, w0))
+
+  /** `walked`: the customer comes from the shared queue and has to reach the lane first. */
+  const startService = (server: number, customer: Customer, t: number, walked: boolean): void => {
     busy[server] = true
     busyCount++
-    const end = t + customer.service
+    const start = t + (walked && walk ? (walk[server] ?? 0) : 0)
+    const scanEnd = start + customer.service * mult
+    const end = scanEnd + (customer.changeover ?? 0)
     departures.push({ time: end, server })
-    const overlap = Math.min(end, w1) - Math.max(t, w0)
-    if (overlap > 0) busyTime[server] = (busyTime[server] as number) + overlap
+    busyTime[server] = (busyTime[server] as number) + overlap(t, end)
+    scanTime += overlap(start, scanEnd)
     served++
-    trace?.push({ id: customer.id, arrival: customer.arrival, start: t, end, server })
+    trace?.push({ id: customer.id, arrival: customer.arrival, called: t, start, scanEnd, end, server })
     if (customer.arrival >= w0 && customer.arrival < w1) {
-      waits.push(t - customer.arrival)
+      waits.push(start - customer.arrival)
       sojournSum += end - customer.arrival
     }
   }
@@ -128,7 +158,7 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
     if (pooled) {
       const idle = busy.indexOf(false)
       if (idle >= 0) {
-        startService(idle, customer, t)
+        startService(idle, customer, t, false)
       } else {
         ;(queues[0] as Fifo<Customer>).push(customer)
         waiting++
@@ -153,7 +183,7 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
         target = ties.length === 1 ? (ties[0] as number) : (ties[rng.int(ties.length)] as number)
       }
       if (!busy[target]) {
-        startService(target, customer, t)
+        startService(target, customer, t, false)
       } else {
         ;(queues[target] as Fifo<Customer>).push(customer)
         waiting++
@@ -168,7 +198,7 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
     const next = (queues[pooled ? 0 : server] as Fifo<Customer>).shift()
     if (next) {
       waiting--
-      startService(server, next, t)
+      startService(server, next, t, true)
     }
   }
 
@@ -208,6 +238,7 @@ export function simulate(customers: readonly Customer[], cfg: SimConfig): SimRes
     meanQueueLength: areaQueue / window,
     meanInSystem: areaSystem / window,
     utilization: busyTime.reduce((a, b) => a + b, 0) / (c * window),
+    scanUtilization: scanTime / (c * window),
     serverUtilization: busyTime.map((b) => b / window),
     maxQueueLength: maxQueue,
     ...(trace ? { trace } : {}),

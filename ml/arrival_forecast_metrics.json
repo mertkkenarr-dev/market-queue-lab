@@ -2,22 +2,22 @@
   "P1→P2": {
     "methods": {
       "profil": {
-        "mape": 56.238629127323655,
+        "mape": 56.23862912732367,
         "bias": 55.92264333880821,
-        "poisson_deviance": 49.081069020586064
+        "poisson_deviance": 49.08106902058604
       },
       "profil × son dönem ölçeği": {
-        "mape": 56.238629127323705,
-        "bias": 55.92264333880826,
-        "poisson_deviance": 49.081069020586106
+        "mape": 56.23862912732367,
+        "bias": 55.92264333880821,
+        "poisson_deviance": 49.08106902058604
       },
       "Poisson GBM": {
         "mape": 55.854745481408365,
-        "bias": 55.7577006384995,
+        "bias": 55.75770063849951,
         "poisson_deviance": 45.813906755965085
       }
     },
-    "last_period_scale": 1.0000000000000002
+    "last_period_scale": 1.0
   },
   "P1+P2→P3": {
     "methods": {
@@ -27,34 +27,34 @@
         "poisson_deviance": 15.442281396806955
       },
       "profil × son dönem ölçeği": {
-        "mape": 14.410531362184138,
-        "bias": -1.5800138057047435,
-        "poisson_deviance": 9.126642643076961
+        "mape": 14.410531362184134,
+        "bias": -1.580013805704757,
+        "poisson_deviance": 9.126642643076963
       },
       "Poisson GBM": {
         "mape": 11.951331997820787,
         "bias": -3.3376170255405855,
-        "poisson_deviance": 6.466267805997884
+        "poisson_deviance": 6.466267805997881
       }
     },
-    "last_period_scale": 0.8212100546008956
+    "last_period_scale": 0.8212100546008955
   },
   "P2→P3": {
     "methods": {
       "profil": {
-        "mape": 14.387457961232972,
-        "bias": -3.620885425762585,
+        "mape": 14.387457961232975,
+        "bias": -3.620885425762584,
         "poisson_deviance": 9.27871009765634
       },
       "profil × son dönem ölçeği": {
-        "mape": 14.387457961232972,
-        "bias": -3.620885425762585,
+        "mape": 14.387457961232975,
+        "bias": -3.620885425762584,
         "poisson_deviance": 9.27871009765634
       },
       "Poisson GBM": {
         "mape": 14.307126192211156,
         "bias": -3.359305604452402,
-        "poisson_deviance": 9.657835589525309
+        "poisson_deviance": 9.65783558952531
       }
     },
     "last_period_scale": 1.0

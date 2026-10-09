@@ -1,9 +1,10 @@
 import type { Customer } from '@sim/engine'
 import { simulate } from '@sim/engine'
+import { FIELD, layoutOptions, TEXTBOOK } from '@sim/field'
 import type { StoreParams } from '@sim/params'
 import { Random } from '@sim/random'
 import { basketContext, buildChannelSampler, selfServiceShare, streamForInterval } from '@sim/store'
-import type { DowGroup, Journey, LayoutKind } from '../types/scenario'
+import type { DowGroup, Journey, LayoutKind, ModelKind } from '../types/scenario'
 
 const HOUR = 3600
 
@@ -35,13 +36,15 @@ export function buildStream(params: StoreParams, day: DowGroup, hour: number, se
   return { customers, items, ratePerHour: rate * HOUR }
 }
 
-export function runLayout(stream: Stream, lanes: number, layout: LayoutKind): LayoutRun {
-  const res = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1, trace: true })
+const effects = (model: ModelKind) => (model === 'saha' ? FIELD : TEXTBOOK)
+
+export function runLayout(stream: Stream, lanes: number, layout: LayoutKind, model: ModelKind): LayoutRun {
+  const res = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1, trace: true, ...layoutOptions(layout, lanes, effects(model)) })
   const trace = res.trace ?? []
   const journeys: Journey[] = Array.from({ length: stream.customers.length })
   let endTime = 0
   for (const r of trace) {
-    journeys[r.id] = { arrival: r.arrival, start: r.start, end: r.end, lane: r.server, items: stream.items[r.id] ?? 1 }
+    journeys[r.id] = { arrival: r.arrival, called: r.called, start: r.start, scanEnd: r.scanEnd, end: r.end, lane: r.server, items: stream.items[r.id] ?? 1 }
     if (r.end > endTime) endTime = r.end
   }
   return { journeys, meanWait: res.meanWait, waitP90: res.waitP90, probWait: res.probWait, utilization: res.utilization, endTime }
@@ -55,7 +58,7 @@ export interface RunSummary {
 }
 
 /** İz tutmayan hafif koşu: çok tekrarlı karşılaştırmada yüzlerce kez çağrılır. */
-export function runSummary(stream: Stream, lanes: number, layout: LayoutKind): RunSummary {
-  const r = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1 })
+export function runSummary(stream: Stream, lanes: number, layout: LayoutKind, model: ModelKind): RunSummary {
+  const r = simulate(stream.customers, { servers: lanes, layout, warmup: 0, horizon: HOUR, routingSeed: 1, ...layoutOptions(layout, lanes, effects(model)) })
   return { meanWait: r.meanWait, waitP90: r.waitP90, probWait: r.probWait, utilization: r.utilization }
 }

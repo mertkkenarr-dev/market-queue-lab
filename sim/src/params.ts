@@ -18,6 +18,12 @@ const joint = z.object({
   by_context: z.record(z.string(), z.object({ pmf_items_x_card: pmf600, n: z.number().int().positive() })).optional(),
 })
 
+const quantileTable = z.array(z.number().nonnegative()).length(101)
+const changeoverChannel = z.object({
+  cash: z.object({ n: z.number().int().positive(), mean: z.number().nonnegative(), quantiles: quantileTable }),
+  card: z.object({ n: z.number().int().positive(), mean: z.number().nonnegative(), quantiles: quantileTable }),
+})
+
 const paramsSchema = z.object({
   train_periods: z.array(z.string()).min(1),
   holdout_periods: z.array(z.string()),
@@ -31,6 +37,8 @@ const paramsSchema = z.object({
     per_second_by_group_hour: z.record(z.string(), z.record(z.string(), z.number().nonnegative())),
     sigma_day: z.number().nonnegative(),
   }),
+  /** Lane changeover between customers, learned from saturated cashier-hours (scripts/03_fit.py §7). */
+  changeover: z.object({ max_seconds: z.number().positive(), servis: changeoverChannel, 'self-servis': changeoverChannel }).optional(),
 })
 
 export type StoreParams = z.infer<typeof paramsSchema>

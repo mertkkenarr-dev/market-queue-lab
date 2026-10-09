@@ -26,8 +26,8 @@ export function BeltItems({ journeys, lanes, clock }: { journeys: readonly Journ
     const slots = new Uint8Array(lanes)
     for (let i = 0; i < journeys.length; i++) {
       const j = journeys[i] as Journey
-      if (t < j.start || t >= j.end) continue
-      const p = (t - j.start) / (j.end - j.start)
+      if (t < j.start || t >= j.scanEnd) continue
+      const p = (t - j.start) / (j.scanEnd - j.start)
       const n = Math.min(PER_LANE, j.items)
       const zFar = DESK_Z + 0.3 + BELT_LENGTH - 0.2
       const zNear = DESK_Z + 0.55

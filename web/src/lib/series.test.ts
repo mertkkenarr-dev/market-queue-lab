@@ -3,9 +3,9 @@ import type { Journey } from '../types/scenario'
 import { waitingSeries } from './series'
 
 const js: Journey[] = [
-  { arrival: 0, start: 0, end: 10, lane: 0, items: 1 },
-  { arrival: 5, start: 10, end: 20, lane: 0, items: 1 },
-  { arrival: 6, start: 20, end: 30, lane: 0, items: 1 },
+  { arrival: 0, called: 0, start: 0, scanEnd: 10, end: 10, lane: 0, items: 1 },
+  { arrival: 5, called: 10, start: 10, scanEnd: 20, end: 20, lane: 0, items: 1 },
+  { arrival: 6, called: 20, start: 20, scanEnd: 30, end: 30, lane: 0, items: 1 },
 ]
 
 describe('waitingSeries', () => {
@@ -17,9 +17,9 @@ describe('waitingSeries', () => {
 
   it('reports a peak of 2 when two customers wait at the same time', () => {
     const two: Journey[] = [
-      { arrival: 0, start: 0, end: 30, lane: 0, items: 1 },
-      { arrival: 1, start: 30, end: 40, lane: 0, items: 1 },
-      { arrival: 2, start: 40, end: 50, lane: 0, items: 1 },
+      { arrival: 0, called: 0, start: 0, scanEnd: 30, end: 30, lane: 0, items: 1 },
+      { arrival: 1, called: 30, start: 30, scanEnd: 40, end: 40, lane: 0, items: 1 },
+      { arrival: 2, called: 40, start: 40, scanEnd: 50, end: 50, lane: 0, items: 1 },
     ]
     expect(waitingSeries(two, 60, 5).peak).toBe(2)
   })

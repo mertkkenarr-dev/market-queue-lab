@@ -1,34 +1,21 @@
-/** Birimler metre. Mağaza 22 x 16 m; kasa hattı arka duvara yakın, kuyruklar müşteri tarafına (+z) uzanır. */
-export const STORE = { halfW: 11, zBack: -8, zFront: 13 }
+import { laneX, QUEUE_START_Z, STORE } from '@sim/geometry'
+
+/**
+ * Sahne geometrisi. Kasa hattı, kuyruk başı ve kıvrımlı kuyruk bloğu motorla ortak (`@sim/geometry`):
+ * simülasyonun ortak kuyruğa yazdığı yürüme saniyeleri, ekranda çizilen mesafelerden hesaplanır.
+ */
+export { DESK_Z, laneX, openLanesCenter, QUEUE_START_Z, servingPosition, STORE, TOTAL_LANES } from '@sim/geometry'
+
 export const STORE_DEPTH = STORE.zFront - STORE.zBack
 export const STORE_CENTER_Z = (STORE.zFront + STORE.zBack) / 2
-export const DESK_Z = -3.4
 export const BELT_LENGTH = 2.2
-export const QUEUE_START_Z = DESK_Z + 3.0
 export const QUEUE_GAP = 1.0
 export const DOOR = { x: -9.2, z: STORE.zFront - 1 }
 export const EXIT = { x: 9.2, z: STORE.zFront - 1 }
 export const EXIT_SECONDS = 8
 
-/** Mağazada sabit 10 fiziksel kasa var; açık olanlar soldan (girişe en yakın) başlar, kalanlar kapalı durur. */
-export const TOTAL_LANES = 10
-const LANE_SPAN = 15.6
 const SLOTS_PER_COLUMN = Math.floor((STORE.zFront - 0.8 - QUEUE_START_Z) / QUEUE_GAP) + 1
 const COLUMN_GAP = 0.95
-
-export function laneX(lane: number): number {
-  return -LANE_SPAN / 2 + (LANE_SPAN * lane) / (TOTAL_LANES - 1)
-}
-
-/** Açık kasaların yatay ortası: ortak kuyruk bloğu ve bariyeri buraya kurulur. */
-export function openLanesCenter(lanes: number): number {
-  return (laneX(0) + laneX(Math.max(0, lanes - 1))) / 2
-}
-
-/** Müşteri bandın yanında durur; kasiyer bandın ucunda. */
-export function servingPosition(lane: number): { x: number; z: number } {
-  return { x: laneX(lane) - 0.75, z: DESK_Z + 1.5 }
-}
 
 /**
  * Ayrı kuyrukta sıra kasanın önünde uzar, duvara varınca yandaki sütuna kayar.
@@ -41,3 +28,4 @@ export function queueSlot(rank: number, lane: number): { x: number; z: number } 
   const row = Math.min(rank - column * SLOTS_PER_COLUMN, SLOTS_PER_COLUMN - 1)
   return { x: laneX(lane) - 0.75 - column * COLUMN_GAP, z: QUEUE_START_Z + row * QUEUE_GAP }
 }
+

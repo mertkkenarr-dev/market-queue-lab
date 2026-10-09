@@ -190,7 +190,7 @@ function drawAgent(i: number, a: AgentState, target: ReturnType<typeof makeBuffe
   d.updateMatrix()
   m.cart.setMatrixAt(i, d.matrix)
   const j = journeys[i] as Journey
-  const unloaded = Math.min(1, Math.max(0, ((t - j.start) / (j.end - j.start)) * 1.3))
+  const unloaded = Math.min(1, Math.max(0, ((t - j.start) / Math.max(1e-6, j.scanEnd - j.start)) * 1.3))
   d.scale.set(1, 0.02 + 0.28 * Math.min(1, j.items / 40) * (1 - unloaded), 1)
   d.position.y = 0.46
   d.updateMatrix()

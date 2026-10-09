@@ -1,4 +1,4 @@
-"""Simülatörün vekil modeli: (kasa, düzen, yük, servis süresi) -> bekleme ölçüleri.
+"""Simülatörün vekil modeli: (kasa, düzen, yük, müşteri başına kasa meşguliyeti) -> bekleme ölçüleri.
 
 Neden gradient boosting: tablo veri, 4 özellik, keskin doğrusal olmayan yapı (ρ→1'de patlama),
 monoton kısıtlarla fiziksel tutarlılık. Derin ağ bu boyutta gereksiz.
@@ -23,8 +23,8 @@ tr = pd.read_csv(ROOT / "ml/data/sweep_train.csv")
 te = pd.read_csv(ROOT / "ml/data/sweep_test.csv")
 for d in (tr, te):
     d["pooled"] = (d.layout == "pooled").astype(int)
-FEATS = ["lanes", "pooled", "rho", "mean_service"]
-MONO = [-1, 0, 1, 1]  # kasa↑ bekleme↓, yük↑ bekleme↑, servis süresi↑ bekleme↑ (ρ sabitken zaman ölçeği)
+FEATS = ["lanes", "pooled", "rho", "mean_occupancy"]
+MONO = [-1, 0, 1, 1]  # kasa↑ bekleme↓, yük↑ bekleme↑, kasa meşguliyeti↑ bekleme↑ (ρ sabitken zaman ölçeği)
 
 TARGETS = {  # hedef -> (dönüşüm, ters dönüşüm); bekleme sağa çarpık: log uzayında öğren
     "wait_mean": (np.log1p, np.expm1),
@@ -51,7 +51,7 @@ def erlang_c_wait(c: int, lam: float, es: float) -> float:
     return pc / (c / es - lam / 3600.0)
 
 
-te["erlang"] = [erlang_c_wait(int(r.lanes), r.lam_per_hour, r.mean_service) for r in te.itertuples()]
+te["erlang"] = [erlang_c_wait(int(r.lanes), r.lam_per_hour, r.mean_occupancy) for r in te.itertuples()]
 te["sur"] = pred["wait_mean"]
 te["noise"] = te.wait_mean_sd / math.sqrt(REPS)  # simülatörün kendi 12-tekrar ortalama hatası
 

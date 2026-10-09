@@ -69,3 +69,23 @@ fig.suptitle("Eğitim: P1+P2, test: P3 (modelin hiç görmediği dönem)", fonts
 fig.tight_layout()
 fig.savefig(ROOT / "docs" / "figures" / "07_holdout.png", dpi=150)
 print("\nYazıldı: docs/figures/07_holdout.png, 08_drift_bias.png, docs/holdout_metrics.json")
+
+# ---- Şekil 3: kasiyer boşluğu. Veride bekleme yok ama boşluk var: kuyruk varsa kısa, yoksa uzun.
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
+hist = loaded["P1+P2→P3"]["gap_hist"]
+real_h, sim_h = np.array(hist["real"], float), np.array(hist["sim"], float)
+xs = np.arange(len(real_h))
+axes[0].plot(xs, np.cumsum(real_h) / real_h.sum(), color="#a8763e", lw=2, label="gerçek (P3)")
+axes[0].plot(xs, np.cumsum(sim_h) / sim_h.sum(), color="#1f5f5b", lw=2, ls="--", label="simülasyon (P1+P2'den)")
+axes[0].set(xlabel="iki müşteri arası kasiyer boşluğu (sn, 120 = 120+)", ylabel="birikimli pay", title="Boşluk dağılımı, tüm saatler")
+axes[0].legend(); axes[0].grid(alpha=0.3)
+a = collect(W, "observed", "servis", "gapShort", "gap_short_service", False)
+real, lo, med, hi = a.T
+axes[1].errorbar(real, med, yerr=[med - lo, hi - med], fmt="o", ms=3, alpha=0.5, color="#1f5f5b", elinewidth=0.6)
+lim = [min(real.min(), lo.min()) - 0.02, 1.0]
+axes[1].plot(lim, lim, "k--", lw=1)
+axes[1].set(xlabel="gerçek: ≤30 sn boşluk payı", ylabel="simülasyon (medyan, %90 aralık)", title="Saat saat: kasiyer kesintisiz meşgul mü?")
+axes[1].grid(alpha=0.3)
+fig.tight_layout()
+fig.savefig(ROOT / "docs" / "figures" / "12_cashier_gaps.png", dpi=150)
+print("Yazıldı: docs/figures/12_cashier_gaps.png")

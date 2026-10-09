@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/context'
 import type { StaffingRow, Verification } from '../lib/staffing'
 
 export interface RowCheck {
@@ -5,7 +6,6 @@ export interface RowCheck {
   less: Verification | null
 }
 
-const sec = (s: number): string => (s >= 60 ? `${Math.floor(s / 60)} dk ${String(Math.round(s % 60)).padStart(2, '0')} sn` : `${Math.round(s)} sn`)
 
 interface Props {
   average: readonly StaffingRow[]
@@ -15,20 +15,23 @@ interface Props {
 }
 
 export function StaffTable({ average, busy, checks, onVerify }: Props) {
+  const { t, f } = useI18n()
+  const s = t.staffing
+  const h = s.headers
   return (
     <div className="table-wrap">
       <table className="staff-table">
-        <caption>Vekil model önerisi ve simülatörle sınama (sınama ortalama gün talebiyle yapılır)</caption>
+        <caption>{s.tableCaption}</caption>
         <thead>
           <tr>
-            <th scope="col">Saat</th>
-            <th scope="col">Müşteri / saat</th>
-            <th scope="col">Ortalama gün: kasa</th>
-            <th scope="col">Yoğun gün: kasa</th>
-            <th scope="col">Vekil P90</th>
-            <th scope="col">Simülatör P90</th>
-            <th scope="col">Bir eksik kasa (sim.)</th>
-            <th scope="col"><span className="sr-only">Sına</span></th>
+            <th scope="col">{h.hour}</th>
+            <th scope="col">{h.perHour}</th>
+            <th scope="col">{h.avgLanes}</th>
+            <th scope="col">{h.busyLanes}</th>
+            <th scope="col">{h.surrogateP90}</th>
+            <th scope="col">{h.simP90}</th>
+            <th scope="col">{h.oneLess}</th>
+            <th scope="col"><span className="sr-only">{h.verify}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -39,12 +42,12 @@ export function StaffTable({ average, busy, checks, onVerify }: Props) {
               <tr key={r.hour}>
                 <th scope="row" className="num">{String(r.hour).padStart(2, '0')}:00</th>
                 <td className="num">{Math.round(r.lamPerHour)}</td>
-                <td className="num">{r.lanes ?? 'sağlanamıyor'}</td>
-                <td className="num">{b?.lanes ?? 'sağlanamıyor'}</td>
-                <td className="num">{r.predP90 === null ? '–' : sec(r.predP90)}</td>
-                <td className="num">{c ? `${sec(c.at.p90)} · %${Math.round(c.at.meets * 100)} sağlıyor` : '–'}</td>
-                <td className="num">{c ? (c.less ? `${sec(c.less.p90)} · %${Math.round(c.less.meets * 100)} sağlıyor` : 'tek kasa') : '–'}</td>
-                <td>{r.lanes !== null && <button type="button" onClick={() => onVerify(r)}>Sına</button>}</td>
+                <td className="num">{r.lanes ?? s.unattainable}</td>
+                <td className="num">{b?.lanes ?? s.unattainable}</td>
+                <td className="num">{r.predP90 === null ? '–' : f.wait(r.predP90)}</td>
+                <td className="num">{c ? s.meets(f.wait(c.at.p90), Math.round(c.at.meets * 100)) : '–'}</td>
+                <td className="num">{c ? (c.less ? s.meets(f.wait(c.less.p90), Math.round(c.less.meets * 100)) : s.singleLane) : '–'}</td>
+                <td>{r.lanes !== null && <button type="button" onClick={() => onVerify(r)}>{s.verify}</button>}</td>
               </tr>
             )
           })}

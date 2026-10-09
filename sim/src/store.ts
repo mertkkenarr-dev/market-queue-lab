@@ -1,9 +1,34 @@
 import { simulate, type Customer, type SimResult } from './engine'
+import { laneGaps } from './gaps'
 import { Random, toCdf } from './random'
 import type { Channel, ServiceModel, StoreParams } from './params'
 
 export interface ChannelSampler {
-  sample(rng: Random): { items: number; card: number; service: number }
+  sample(rng: Random): { items: number; card: number; service: number; changeover: number }
+}
+
+/** Inverse-CDF draw from a 101-point quantile table, linear between knots. */
+function fromQuantiles(q: readonly number[], u: number): number {
+  const pos = u * (q.length - 1)
+  const i = Math.min(q.length - 2, Math.floor(pos))
+  const a = q[i] as number
+  return a + ((q[i + 1] as number) - a) * (pos - i)
+}
+
+/** Mean changeover for a channel under its basket context (cash/card mix); 0 when the params carry none. */
+export function expectedChangeover(p: StoreParams, channel: Channel, context?: string): number {
+  const co = p.changeover?.[channel]
+  if (!co) return 0
+  const joint = p.channel.joint[channel]
+  const pmf = (context !== undefined ? joint.by_context?.[context]?.pmf_items_x_card : undefined) ?? joint.pmf_items_x_card
+  let card = 0
+  let total = 0
+  pmf.forEach((w, idx) => {
+    total += w
+    if (idx & 1) card += w
+  })
+  const share = total > 0 ? card / total : 0
+  return share * co.card.mean + (1 - share) * co.cash.mean
 }
 
 /** Service time for a basket: moment-matched lognormal with mean/variance from the fitted model. */
@@ -26,6 +51,8 @@ export function basketContext(dowGroup: string, hour: number): string {
 export interface SamplerOptions {
   /** Multiplies mean and standard deviation of service time (recalibration to a faster/slower crew). */
   serviceScale?: number
+  /** Leave out the lane changeover (the textbook model: lane frees the instant scanning ends). */
+  noChangeover?: boolean
 }
 
 export function expectedService(p: StoreParams, channel: Channel, context?: string): number {
@@ -44,13 +71,18 @@ export function buildChannelSampler(p: StoreParams, channel: Channel, context?: 
   const pmf = (context !== undefined ? joint.by_context?.[context]?.pmf_items_x_card : undefined) ?? joint.pmf_items_x_card
   const cdf = toCdf(pmf)
   const model = p.service[channel]
+  const co = opts.noChangeover ? undefined : p.changeover?.[channel]
   return {
     sample(rng) {
       const idx = rng.discrete(cdf)
       const items = (idx >> 1) + 1
       const card = idx & 1
       const { mean, variance } = serviceMoments(model, items, card)
-      return { items, card, service: rng.lognormalFromMoments(mean * scale, variance * scale * scale) }
+      const service = rng.lognormalFromMoments(mean * scale, variance * scale * scale)
+      // Drawn even without a table so the random stream stays aligned whether or not changeover is modelled.
+      const u = rng.uniform()
+      const changeover = co ? fromQuantiles(card ? co.card.quantiles : co.cash.quantiles, u) : 0
+      return { items, card, service, changeover }
     },
   }
 }
@@ -89,7 +121,7 @@ export function streamForInterval(
   const items: number[] = []
   times.forEach((arrival, i) => {
     const s = sampler.sample(rng)
-    customers.push({ id: i, arrival, service: s.service })
+    customers.push({ id: i, arrival, service: s.service, changeover: s.changeover })
     items.push(s.items)
   })
   return { customers, items }
@@ -102,20 +134,32 @@ export interface WindowSpec {
   fixedCount?: number
   servers: number
   layout: 'pooled' | 'separate-jsq'
+  /** Scan-time multiplier (pooled-queue slowdown). */
+  serviceMultiplier?: number
+  /** Pooled layout: walk from the head of the shared queue to each lane (seconds). */
+  walkToServer?: readonly number[]
+  /** Also return cashier gaps (needs a trace and 15 minutes of arrivals after the hour). */
+  gaps?: boolean
 }
 
 export interface WindowResult {
   count: number
   basketMean: number
   serviceMean: number
+  /** Scanning share of lane time, the quantity the POS data can measure. */
   utilization: number
+  /** Lane occupancy including changeover. */
+  occupancy: number
   meanWait: number
   waitP90: number
   probWait: number
+  /** Present when `spec.gaps` is set. */
+  gaps?: number[]
 }
 
 const WARMUP = 1800
 const HOUR = 3600
+const TAIL = 900
 
 /**
  * One hour of one channel, treated as stationary: a 30-minute warm-up at the same
@@ -125,13 +169,19 @@ const HOUR = 3600
 export function simulateWindow(sampler: ChannelSampler, spec: WindowSpec, rng: Random, routingSeed: number): WindowResult {
   const warm = streamForInterval(sampler, rng, 0, WARMUP, spec.rate)
   const meas = streamForInterval(sampler, rng, WARMUP, WARMUP + HOUR, spec.rate, spec.fixedCount)
-  const customers = [...warm.customers, ...meas.customers].map((c, i) => ({ ...c, id: i }))
+  // The tail gives the hour's last customers a successor, as in the data. Its own RNG keeps the other metrics
+  // identical whether or not gaps are requested.
+  const tail = spec.gaps ? streamForInterval(sampler, new Random(routingSeed * 7919 + 17), WARMUP + HOUR, WARMUP + HOUR + TAIL, spec.rate) : null
+  const customers = [...warm.customers, ...meas.customers, ...(tail?.customers ?? [])].map((c, i) => ({ ...c, id: i }))
   const res: SimResult = simulate(customers, {
     servers: spec.servers,
     layout: spec.layout,
     warmup: WARMUP,
     horizon: WARMUP + HOUR,
     routingSeed,
+    serviceMultiplier: spec.serviceMultiplier,
+    walkToServer: spec.walkToServer,
+    trace: spec.gaps,
   })
   const n = meas.customers.length
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
@@ -139,9 +189,11 @@ export function simulateWindow(sampler: ChannelSampler, spec: WindowSpec, rng: R
     count: n,
     basketMean: mean(meas.items),
     serviceMean: mean(meas.customers.map((c) => c.service)),
-    utilization: res.utilization,
+    utilization: res.scanUtilization,
+    occupancy: res.utilization,
     meanWait: res.meanWait,
     waitP90: res.waitP90,
     probWait: res.probWait,
+    ...(res.trace ? { gaps: laneGaps(res.trace, spec.servers, WARMUP, WARMUP + HOUR) } : {}),
   }
 }

@@ -1,4 +1,7 @@
-import { DESK_Z, QUEUE_GAP, STORE } from './layout'
+import { SNAKE, STORE } from '@sim/geometry'
+import { QUEUE_GAP } from './layout'
+
+export { SNAKE }
 
 export interface Pt {
   x: number
@@ -21,8 +24,6 @@ export interface Serpentine {
   /** s metre uzaklıktaki nokta ve başa doğru bakış açısı (yaw). s=0 sıranın başıdır. */
   at(s: number): { x: number; z: number; yaw: number }
 }
-
-export const SNAKE = { rowWidth: 6.5, rowSpacing: 1.5, minRows: 2, maxRows: 8, gate: 1.2, sidePad: 0.6, firstRowZ: DESK_Z + 3.6 }
 
 const pathLength = (rows: number): number => SNAKE.rowWidth / 2 + (rows - 1) * (SNAKE.rowSpacing + SNAKE.rowWidth)
 

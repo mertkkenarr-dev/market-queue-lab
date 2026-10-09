@@ -7,7 +7,7 @@ import { buildChannelSampler, simulateWindow } from '../src/store'
 const params = parseParams(JSON.parse(readFileSync('params.json', 'utf8')))
 const { target_p90_s: target, plan } = JSON.parse(readFileSync('../ml/staffing_plan.json', 'utf8')) as {
   target_p90_s: number
-  plan: { group: string; hour: number; scenario: string; lam_per_hour: number; ctx: string; lanes: number }[]
+  plan: { group: string; hour: number; scenario: string; lam_per_hour: number; ctx: string; lanes: number | null }[]
 }
 const REPS = 400
 const q = (xs: number[], p: number): number => [...xs].sort((a, b) => a - b)[Math.floor(p * (xs.length - 1))] as number
@@ -22,9 +22,11 @@ function evaluate(ctx: string, lam: number, lanes: number, seed: number): { mean
   return { meanP90: p90s.reduce((a, b) => a + b, 0) / REPS, shareMeeting: ok }
 }
 
-const out = plan.map((p, i) => {
-  const at = evaluate(p.ctx, p.lam_per_hour, p.lanes, i + 1)
-  const less = p.lanes > 1 ? evaluate(p.ctx, p.lam_per_hour, p.lanes - 1, i + 1) : null
+// Hücreler 10 kasayla sağlanamıyorsa (lanes = null) sınanacak bir öneri yoktur.
+const feasible = plan.flatMap((p, i) => (p.lanes === null ? [] : [{ ...p, lanes: p.lanes, seed: i + 1 }]))
+const out = feasible.map((p) => {
+  const at = evaluate(p.ctx, p.lam_per_hour, p.lanes, p.seed)
+  const less = p.lanes > 1 ? evaluate(p.ctx, p.lam_per_hour, p.lanes - 1, p.seed) : null
   return { ...p, sim_p90_at: at.meanP90, sim_ok_at: at.shareMeeting, sim_p90_less: less?.meanP90 ?? null, sim_ok_less: less?.shareMeeting ?? null }
 })
 writeFileSync('../ml/staffing_verified.json', JSON.stringify(out, null, 1))

@@ -8,6 +8,7 @@ CHECKS = [
     ("observed", "self", "serviceMean", "tran_mean_self", False, "Ort. servis süresi (self-servis)"),
     ("predicted", "servis", "count", "n_service", False, "Saatlik müşteri sayısı (servis)"),
     ("predicted", "self", "count", "n_self", False, "Saatlik müşteri sayısı (self-servis)"),
+    ("observed", "servis", "gapShort", "gap_short_service", False, "Kısa kasiyer boşluğu payı (≤30 sn)"),
 ]
 
 

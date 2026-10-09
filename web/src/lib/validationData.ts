@@ -2,6 +2,14 @@ import { z } from 'zod'
 
 const tuple4 = z.tuple([z.number(), z.number(), z.number(), z.number()])
 const foldMetric = z.object({ mode: z.string(), n: z.number(), bias_pct: z.number(), mape_pct: z.number(), coverage_pct: z.number() })
+const fieldRow = z.object({
+  lanes: z.number(), rho: z.number(), separateWait: z.number(),
+  /** Ortak − ayrı ortalama bekleme (sn) ve %95 aralığı; negatif = ortak kuyruk daha kısa bekletiyor. */
+  textbook: z.number(), textbookLo: z.number(), textbookHi: z.number(),
+  walkOnly: z.number(), field: z.number(), fieldLo: z.number(), fieldHi: z.number(),
+  /** Yürüme dahil, ortak kuyruğun avantajını sıfırlayan kasiyer yavaşlaması (oran). */
+  breakEven: z.number(),
+})
 const triple = z.object({ bias: z.number(), mape: z.number(), coverage: z.number() })
 
 const schema = z.object({
@@ -17,7 +25,23 @@ const schema = z.object({
     r2: z.record(z.string(), z.number()),
   }),
   theory: z.record(z.string(), z.array(z.object({ rho: z.number(), theory: z.number(), sim: z.number(), lo: z.number(), hi: z.number() }))),
+  gaps: z.object({
+    shortSeconds: z.number(),
+    /** [saniye, gerçek birikimli pay, simülasyon birikimli pay] */
+    cdf: z.array(z.tuple([z.number(), z.number(), z.number()])),
+    scatter: z.array(tuple4),
+    corr: z.number(),
+  }),
+  store: z.object({
+    windows: z.number(), p90Median: z.number(), p90Over2min: z.number(), p90Over5min: z.number(), meanWaitMedian: z.number(),
+    occupancyMedian: z.number(), occupancyP25: z.number(), occupancyP75: z.number(), probWaitMedian: z.number(),
+    lanesLogsMean: z.number(), lanesProxyMean: z.number(),
+  }),
+  observedLanes: z.record(z.string(), z.record(z.string(), z.number())),
+  field: z.object({ occupancySeconds: z.number(), reps: z.number(), rows: z.array(fieldRow) }),
 })
+
+export type FieldRow = z.infer<typeof fieldRow>
 
 export type ValidationData = z.infer<typeof schema>
 export type Tuple4 = z.infer<typeof tuple4>

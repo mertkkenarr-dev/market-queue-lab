@@ -1,88 +1,91 @@
+import { GapChart } from '../components/story/GapChart'
 import { BiasBars } from '../components/validation/BiasBars'
 import { Scatter } from '../components/validation/Scatter'
 import { ArrivalTable, HoldoutTable, RecalTable, SurrogateTable } from '../components/validation/Tables'
 import { TheoryChart } from '../components/validation/TheoryChart'
+import { VALIDATION } from '../content/validation'
+import type { ValidationNumbers } from '../content/validation.types'
 import raw from '../data/validation.json'
+import { useI18n } from '../i18n/context'
 import { parseValidation } from '../lib/validationData'
 
 const state = parseValidation(raw)
 
 export default function ValidationView() {
-  if (state.status === 'error') return <div className="state"><h1>Doğrulama verisi okunamadı</h1><p>{state.message}</p></div>
+  const { lang, t, f } = useI18n()
+  if (state.status === 'error') return <div className="state"><h1>{t.errors.validation}</h1><p>{state.message}</p></div>
   const d = state.data
+  const c = VALIDATION[lang]
+  const u = t.validationUi.units
+  const gapMetric = Object.entries(d.holdout['P1+P2→P3'] ?? {}).find(([k]) => k.startsWith('Kısa kasiyer'))?.[1]
+  const n: ValidationNumbers = {
+    gapMape: gapMetric ? f.pct(gapMetric.mape_pct, 1) : null,
+    gapCoverage: gapMetric ? f.pct(gapMetric.coverage_pct, 0) : null,
+    gapCorr: f.num(d.gaps.corr, 2),
+    gapSec: d.gaps.shortSeconds,
+    lanesProxy: f.num(d.store.lanesProxyMean, 1),
+    lanesLogs: f.num(d.store.lanesLogsMean, 1),
+    r2Mean: f.num(d.surrogate.r2.wait_mean ?? 0, 2),
+    r2P90: f.num(d.surrogate.r2.wait_p90 ?? 0, 2),
+  }
   return (
     <div className="validation">
-      <section className="staff-intro">
-        <h2>Model gerçeğe ne kadar uyuyor?</h2>
-        <p>
-          İki ayrı soru var ve karıştırılmaz. Motor, kuyruk teorisinin bildiği sonuçları doğru üretiyor mu?
-          Ve öğrenilmiş müşteri modeli, hiç görmediği bir dönemde gerçek mağazayı yakalıyor mu?
-        </p>
-        <p className="hud-note">
-          En büyük sınır: veride yalnızca hizmet almış müşteriler var. Gerçek bekleme süresi ve kuyruk uzunluğu hiç ölçülmemiş,
-          bu yüzden bekleme çıktıları gerçek mağazayla doğrudan karşılaştırılamaz. Aşağıda gerçekle karşılaştırılanlar sepet, servis süresi, doluluk ve müşteri sayısıdır.
-        </p>
-      </section>
+      <header className="page-head">
+        <h1>{c.title}</h1>
+        <p>{c.intro}</p>
+      </header>
+      <p className="callout">{c.callout}</p>
 
       <section aria-labelledby="v1">
-        <h3 id="v1">1. Motor kuyruk teorisini tutturuyor mu?</h3>
-        <p>Ortak kuyrukta (M/M/c) ortalama bekleme için bilinen kapalı formülle karşılaştırma. Üç kasa sayısı, yük oranı 0,3'ten 0,9'a.</p>
+        <h2 id="v1">{c.theory.title}</h2>
+        <p>{c.theory.body}</p>
         <TheoryChart theory={d.theory} />
       </section>
 
       <section aria-labelledby="v2">
-        <h3 id="v2">2. Hiç görmediği dönemde gerçek mağazayı yakalıyor mu?</h3>
-        <p>
-          Veri üç ayrı dönemden oluşuyor. Parametreler yalnızca eğitim dönemlerinden öğrenilir, test dönemi hiçbir aşamada görülmez
-          (kodda sızıntı koruması var). Üç kat: P1→P2, P1+P2→P3, P2→P3.
-        </p>
-        <HoldoutTable holdout={d.holdout} />
-        <BiasBars holdout={d.holdout} />
-        <p>
-          Sepet ve servis süresi yaklaşık %7–12 hatayla tutuyor. Müşteri sayısı dönemler arası seviye kaymasına çok duyarlı: Aralık dönemi (P1) Şubat'ı (P2) yaklaşık %56 yüksek tahmin ettiriyor.
-          Bu bir model hatası değil, öğrenmenin sınırı: üç dönemlik veriyle mevsimsel seviye öğrenilemez.
-          %90 aralıklar da hedefin altında kalıyor (servis süresinde ~%60): kasiyer ve gün farklarını model tam taşımıyor.
-        </p>
-        <div className="scatter-grid">
-          <Scatter title="Ortalama servis süresi" unit="sn" rows={d.scatter.serviceMean} />
-          <Scatter title="Kasa doluluğu (stabil saatler)" unit="oran" rows={d.scatter.utilization} />
-          <Scatter title="Saatlik müşteri sayısı (yalnız eğitimden tahmin)" unit="kişi" rows={d.scatter.count} />
-          <Scatter title="Ortalama sepet" unit="ürün" rows={d.scatter.basket} />
+        <h2 id="v2">{c.gaps.title}</h2>
+        <p>{c.gaps.body(n)}</p>
+        <GapChart cdf={d.gaps.cdf} shortSeconds={d.gaps.shortSeconds} />
+        <div className="scatter-single">
+          <Scatter title={c.gaps.scatterTitle(d.gaps.shortSeconds)} unit={u.share} rows={d.gaps.scatter} />
         </div>
-        <p className="fine">Dağılım grafikleri P1+P2→P3 katı. Her nokta bir saatlik pencere.</p>
+        <p>{c.gaps.honest(n)}</p>
+        <p>{c.gaps.bug(n)}</p>
       </section>
 
       <section aria-labelledby="v3">
-        <h3 id="v3">3. Taze veri ne kadar yardım eder?</h3>
-        <p>Test döneminin ilk 3 günüyle servis hızı ve trafik için yalnızca iki ölçek öğrenildi, skor kalan günlerde.</p>
-        <RecalTable recal={d.recalibration} />
-        <p>Kayma büyükken kazanç belirgin (self-servis müşteri sayısı hatası %30,5 → %17,2), küçükken kazanç yok ya da negatif. 3 gün, ölçek tahmini için gürültülü bir örneklem.</p>
+        <h2 id="v3">{c.holdout.title}</h2>
+        <p>{c.holdout.body}</p>
+        <HoldoutTable holdout={d.holdout} />
+        <BiasBars holdout={d.holdout} />
+        <p>{c.holdout.after}</p>
+        <div className="scatter-grid">
+          <Scatter title={c.holdout.scatters.service} unit={u.seconds} rows={d.scatter.serviceMean} />
+          <Scatter title={c.holdout.scatters.occupancy} unit={u.share} rows={d.scatter.utilization} />
+          <Scatter title={c.holdout.scatters.count} unit={u.people} rows={d.scatter.count} />
+          <Scatter title={c.holdout.scatters.basket} unit={u.items} rows={d.scatter.basket} />
+        </div>
+        <p className="fine">{c.holdout.fine}</p>
       </section>
 
       <section aria-labelledby="v4">
-        <h3 id="v4">4. Öğrenme modelleri ne kazandırıyor?</h3>
-        <p>
-          Vekil model, simülatörün kendi gürültü tabanına ulaşıyor ve Erlang-C formülünden belirgin iyi
-          (R²: ortalama bekleme {d.surrogate.r2.wait_mean?.toFixed(2)}, P90 {d.surrogate.r2.wait_p90?.toFixed(2)}).
-        </p>
-        <SurrogateTable s={d.surrogate} />
-        <p>
-          Varış tahmininde ise öğrenme modeli hakkında dürüst olmak gerekir: Poisson GBM, P1+P2→P3 katında profilden iyi görünüyor,
-          ama bu modelin yakın ve benzer dönemi daha çok dinlemesinden geliyor. Seviye tutunca (P2→P3) basit profille aynı.
-        </p>
-        <ArrivalTable arrival={d.arrival} />
+        <h2 id="v4">{c.recal.title}</h2>
+        <p>{c.recal.body}</p>
+        <RecalTable recal={d.recalibration} />
+        <p>{c.recal.after}</p>
       </section>
 
       <section aria-labelledby="v5">
-        <h3 id="v5">Sınırlar</h3>
-        <ul className="limits">
-          <li>Gerçek bekleme süresi verisi yok: bekleme çıktıları teori ve dolaylı ölçülerle desteklenir.</li>
-          <li>"Açık kasa sayısı", 15 dakikalık bloklarda işlem yapan farklı kasiyer sayısıdır; boşta bekleyen kasa görünmez.</li>
-          <li>Her saat sabit oranlı simüle edilir; gerçek kuyruk saatler arası taşınır.</li>
-          <li>Müşterilerin kuyruk seçimi ve sabırsızlık (kuyruğu terk etme) veride gözlenmedi; iki düzen varsayımdır.</li>
-          <li>Veri tek bir mağazaya ve üç döneme ait; başka mağazalara genelleme iddiası yok.</li>
-        </ul>
-        <p className="fine">Veri: Antczak &amp; Weron (2019), CC BY-NC. Güney Polonya'da bir mağaza, üç iki haftalık dönem.</p>
+        <h2 id="v5">{c.ml.title}</h2>
+        <p>{c.ml.body(n)}</p>
+        <SurrogateTable s={d.surrogate} />
+        <p>{c.ml.arrival}</p>
+        <ArrivalTable arrival={d.arrival} />
+      </section>
+
+      <section aria-labelledby="v6">
+        <h2 id="v6">{c.limits.title}</h2>
+        <ul className="limits">{c.limits.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
       </section>
     </div>
   )

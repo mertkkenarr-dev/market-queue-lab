@@ -1,42 +1,40 @@
-# Devir notu (başka bir oturum/model devralırsa)
+# Devir notu
 
-Durum: Faz 1–4 ve web katmanı tamam. Son commit'ler `git log --oneline` ile görülür. GitHub'a itilmedi, Vercel'e bağlanmadı.
+Durum: model v2 (geçiş süresi, kayıtlardan ölçülen kasa sayısı, ortak kuyruk saha etkileri) ve portföy sitesi tamam.
+GitHub'a itilmedi, barındırmaya bağlanmadı.
 
 ## Çalıştırma
 
 ```bash
-(cd sim && npm install && npm test)          # motor: 49 test
-(cd web && npm install && npm test && npm run lint && npm run build)   # web: 72 test
-(cd web && npm run dev)                      # http://localhost:5191  (#/ , #/kasa , #/dogrulama)
-.venv/bin/python ml/05_export_web.py         # vekil model ve doğrulama özetlerini web/src/data'ya yeniden yazar
+(cd sim && npm install && npm test)                                    # motor: 55 test
+(cd web && npm install && npm test && npm run lint && npm run build)   # web: 77 test
+(cd web && npm run dev)                                                # #/ , #/lab , #/kasa , #/dogrulama , #/yontem
+.venv/bin/python scripts/01_load.py && scripts/pipeline.sh             # ham veriden her sayı (≈3 dk)
 ```
 
-## Mimari (tek cümlelik kurallar)
+Derleme `base: './'` ve hash yönlendirmesi kullanıyor; `web/dist` herhangi bir alt dizine olduğu gibi kopyalanabilir.
 
-- Motor tek kaynak: `sim/src`. Web onu `@sim` takma adıyla doğrudan içe aktarır, kopyalamaz.
-- Sahne ayrı animasyon verisi kullanmaz: `web/src/lib/replay.ts` motorun olay izinden hedef konumları üretir, `Crowd.tsx` onları gerçek yürüme hızıyla izler.
-- Sayılar `sim/params.json`'dan gelir (Python `scripts/03_fit.py` üretir). Parametre bozuksa zod hata ekranı gösterir.
-- Vekil model Python'da eğitilir (`ml/01_surrogate.py`), ağaçları JSON olur, web'de `lib/surrogate.ts` değerlendirir. Parite testi Python tahminleriyle eşleşmeyi doğrular.
-- Kıvrımlı ortak kuyruk geometrisi tek yerde: `web/src/lib/serpentine.ts` (şeritler, direkler ve konumlar buradan çıkar).
+## Mimari kuralları
 
-## Bilinen şüpheli noktalar (gözle bakılmalı, testle kanıtlanmadı)
-
-1. Geniş ekranda (≥960 px) yan yana A/B yerleşimi: yalnızca dar bölmede gözle görüldü.
-2. Sıra ilerlemesindeki "dalga" (rank başına 0,1 sn gecikme): davranış birim testli ama canlı görünümü öznel. `QUEUE_DELAY_PER_RANK`, `MAX_QUEUE_DELAY` (`Crowd.tsx`).
-3. Kıvrımlı kuyrukta satırlar arası arabalar komşu şeride yaklaşabiliyor (`SNAKE.rowSpacing`).
-4. Ortak kuyruğun girişi satır sayısına göre sağda ya da solda olabilir; kapı solda, bazen uzun yürüyüş.
-5. İki sahne aynı anda çizilirken düşük cihazlarda fps ölçülmedi (yalnızca tek sahnede ~61 fps ölçüldü).
-6. Doğrulama sayfası metin ağır; sadeleştirilebilir.
+- Motor tek kaynak: `sim/src`. Web onu `@sim` takma adıyla doğrudan içe aktarıyor, kopyalamıyor.
+- Mağaza planı tek kaynak: `sim/src/geometry.ts`. Sahne (`web/src/lib/layout.ts`, `serpentine.ts`) ve yürüme modeli (`sim/src/field.ts`) aynı sayıları kullanıyor.
+- Olay izi: `arrival → called → start → scanEnd → end`. `called..start` ortak kuyruktan kasaya yürüme, `scanEnd..end` geçiş süresi.
+  Sahne ayrı animasyon verisi kullanmıyor: `web/src/lib/replay.ts` hedef konumları bu izden üretiyor.
+- Sayılar `sim/params.json`'dan geliyor (web modeli: P2+P3). Parametre bozuksa zod hata ekranı gösteriyor.
+- `utilization` (motor) = kasa meşguliyeti (geçiş dahil); `scanUtilization` = yalnız tarama. Veriyle karşılaştırılan ikincisi.
+- Vekil model Python'da eğitiliyor, ağaçları JSON olarak web'e geçiyor. Web'deki personel planı Python planıyla testte birebir eşleşiyor.
 
 ## Dürüstlük kuralları (bozulmamalı)
 
-- Veride gerçek bekleme süresi yok. Hiçbir ekran bekleme çıktısını "gerçekle doğrulandı" diye sunmamalı.
-- Vekil model 10 kasa ve ρ ≤ 1,05 dışında güvenilmez; plan bunu sınırlar.
-- A/B cümlesi eşleştirilmiş %95 aralığından üretilir; aralık sıfırı kapsıyorsa "belirgin fark yok" der.
-- Veri CC BY-NC (Antczak & Weron 2019): ham veri depoya girmez, yalnızca türetilmiş özetler.
+- Veride gerçek bekleme süresi yok. Hiçbir ekran bekleme çıktısını "gerçekle doğrulandı" diye sunmamalı; kasiyer boşluğu dolaylı kanıt.
+- Yürüme hızı (1 m/sn) ve yavaşlama (%6,86) varsayım; arayüzde "Ders kitabı" ile kapatılabilir olmalı ve başabaş analizi görünür kalmalı.
+- A/B cümlesi eşleştirilmiş %95 aralığından üretiliyor; aralık sıfırı kapsıyorsa "belirgin fark yok" diyor.
+- Veri CC BY-NC: ham veri depoya girmiyor, yalnızca türetilmiş özetler var.
 
-## Sıradaki işler (öncelik sırasıyla)
+## Bilinen açıklar
 
-1. Gözle görsel/UX incelemesi (yukarıdaki 1–5).
-2. GitHub + Vercel (kullanıcı onayı gerekir).
-3. Faz 5: LLM yardımcısı + değerlendirme seti, ya da ER ikizi (PhysioNet kimlik doğrulaması kullanıcıda).
+1. Ayrı kuyrukta sıradaki müşterinin önceden ürün dizmesi modellenmedi (ortak kuyruk lehine).
+2. Saatler arası taşınma yok; tam gün kesintisiz simülasyon ve "kuyruk N'yi geçince kasa aç" kuralı doğal bir sonraki adım.
+3. Hızlı kasa (≤N ürün) ve kuyruğu terk etme yok.
+4. Kasiyer bazında hız farkı (`OperatorID` veride var) kullanılmıyor; servis süresi aralıklarının dar olmasının (%64 kapsama) olası nedeni.
+5. Ayrıntılı belgeler (docs/) yalnızca Türkçe; site ve README iki dilli. Metinler: web/src/i18n/ui.ts ve web/src/content/.

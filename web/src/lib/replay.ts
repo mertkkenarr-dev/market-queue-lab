@@ -42,7 +42,16 @@ export function frameAt(journeys: readonly Journey[], t: number, layout: LayoutK
       started++
       waitSum += j.start - j.arrival
     }
-    if (t < j.start) {
+    if (t >= j.called && t < j.start) {
+      // Ortak kuyruktan çağrıldı, kasaya yürüyor: kuyrukta değil, kasa onun için tutuluyor.
+      const pos = servingPosition(j.lane)
+      out.tx[i] = pos.x
+      out.tz[i] = pos.z
+      out.state[i] = SERVING
+      out.waited[i] = t - j.arrival
+      serving++
+      laneServing[j.lane] = 1
+    } else if (t < j.start) {
       const q = pooled ? 0 : j.lane
       const rank = queueCounts[q] as number
       queueCounts[q] = rank + 1

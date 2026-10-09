@@ -1,4 +1,4 @@
-import { num, signedPct, pct } from '../../lib/format'
+import { useI18n } from '../../i18n/context'
 import { scatterStats, type Tuple4 } from '../../lib/validationData'
 
 interface Props {
@@ -13,6 +13,8 @@ const M = { l: 44, r: 12, t: 12, b: 40 }
 
 /** Gerçek (x) ve simülasyon medyanı (y); dikey çubuk simülasyonun %90 aralığı. Kesikli çizgi: kusursuz uyum. */
 export function Scatter({ title, unit, rows }: Props) {
+  const { t, f } = useI18n()
+  const v = t.validationUi
   const s = scatterStats(rows)
   const vals = rows.flatMap(([r, lo, , hi]) => [r, lo, hi])
   const lo = Math.min(...vals)
@@ -26,12 +28,12 @@ export function Scatter({ title, unit, rows }: Props) {
   return (
     <figure className="scatter">
       <figcaption>{title}</figcaption>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}: ${s.n} saat. Yanlılık ${signedPct(s.biasPct)}, ortalama mutlak hata ${pct(s.mapePct)}, %90 aralığın kapsaması ${pct(s.coveragePct, 0)}.`}>
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} className="grid" />
-            <text x={M.l - 6} y={y(t) + 4} textAnchor="end" className="num axis">{num(t, hi < 5 ? 2 : 0)}</text>
-            <text x={x(t)} y={H - M.b + 16} textAnchor="middle" className="num axis">{num(t, hi < 5 ? 2 : 0)}</text>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={v.scatterAria(title, s.n, f.signedPct(s.biasPct), f.pct(s.mapePct), f.pct(s.coveragePct, 0))}>
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line x1={M.l} x2={W - M.r} y1={y(tick)} y2={y(tick)} className="grid" />
+            <text x={M.l - 6} y={y(tick) + 4} textAnchor="end" className="num axis">{f.num(tick, hi < 5 ? 2 : 0)}</text>
+            <text x={x(tick)} y={H - M.b + 16} textAnchor="middle" className="num axis">{f.num(tick, hi < 5 ? 2 : 0)}</text>
           </g>
         ))}
         <line x1={x(a)} y1={y(a)} x2={x(b)} y2={y(b)} className="ideal" />
@@ -41,10 +43,10 @@ export function Scatter({ title, unit, rows }: Props) {
             <circle cx={x(real)} cy={y(med)} r="2.5" className="pt" />
           </g>
         ))}
-        <text x={(M.l + W - M.r) / 2} y={H - 4} textAnchor="middle" className="axis">gerçek ({unit})</text>
-        <text x={12} y={(M.t + H - M.b) / 2} textAnchor="middle" className="axis" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>simülasyon</text>
+        <text x={(M.l + W - M.r) / 2} y={H - 4} textAnchor="middle" className="axis">{v.scatterReal(unit)}</text>
+        <text x={12} y={(M.t + H - M.b) / 2} textAnchor="middle" className="axis" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>{v.scatterSim}</text>
       </svg>
-      <p className="scatter-stats num">n={s.n} · yanlılık {signedPct(s.biasPct)} · hata {pct(s.mapePct)} · %90 aralık kapsaması {pct(s.coveragePct, 0)}</p>
+      <p className="scatter-stats">{v.scatterStats(s.n, f.signedPct(s.biasPct), f.pct(s.mapePct), f.pct(s.coveragePct, 0))}</p>
     </figure>
   )
 }
